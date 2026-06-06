@@ -1,110 +1,107 @@
 const { nvidia } = require("../config/nvidia");
 
-const MODEL = "meta/llama-3.1-70b-instruct";
+const MODEL = "meta/llama-3.1-8b-instruct";
+
+// Robustly extract JSON from model output regardless of formatting
+function extractJson(text) {
+  // Strip markdown fences
+  let cleaned = text
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
+    .trim();
+
+  // Try direct parse
+  try { return JSON.parse(cleaned); } catch {}
+
+  // Extract first {...} block
+  const objMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (objMatch) {
+    try { return JSON.parse(objMatch[0]); } catch {}
+  }
+
+  throw new Error("No valid JSON found in AI response");
+}
+
+async function callNvidia(prompt, maxTokens) {
+  const response = await nvidia.chat.completions.create({
+    model: MODEL,
+    max_tokens: maxTokens,
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.3
+  });
+  const content = response.choices[0].message.content.trim();
+  return extractJson(content);
+}
 
 async function callNvidiaWithRetry(prompt, maxTokens) {
-  const attempt = async () => {
-    const response = await nvidia.chat.completions.create({
-      model: MODEL,
-      max_tokens: maxTokens,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7
-    });
-    const content = response.choices[0].message.content.trim();
-    // Strip markdown fences if model returns them despite instructions
-    const cleaned = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
-    return JSON.parse(cleaned);
-  };
-
+  // Attempt 1
   try {
-    return await attempt();
+    return await callNvidia(prompt, maxTokens);
   } catch (firstErr) {
-    console.warn("Nvidia NIM first attempt failed, retrying:", firstErr.message);
-    try {
-      return await attempt();
-    } catch (secondErr) {
-      console.error("Nvidia NIM second attempt failed:", secondErr.message);
-      const err = new Error("AI response malformed, please try again");
-      err.statusCode = 500;
-      err.code = "AI_RESPONSE_ERROR";
-      throw err;
-    }
+    console.warn("Nvidia NIM attempt 1 failed:", firstErr.message);
+  }
+
+  // Attempt 2
+  try {
+    return await callNvidia(prompt, maxTokens);
+  } catch (secondErr) {
+    console.error("Nvidia NIM attempt 2 failed:", secondErr.message);
+    const err = new Error("AI response malformed, please try again");
+    err.statusCode = 500;
+    err.code = "AI_RESPONSE_ERROR";
+    throw err;
   }
 }
 
 const NvidiaService = {
   async predictCareers({ skills, interests }) {
-    const prompt = `You are a future career analyst specialising in AI-era employment (2025–2040).
+    const prompt = `You are a future career analyst for AI-era employment 2025-2040.
 
 Student profile:
-- Current skills: ${skills.join(", ")}
+- Skills: ${skills.join(", ")}
 - Interests: ${interests.join(", ")}
 
-Respond ONLY with valid JSON. No explanation. No markdown. Just the JSON object:
-{
-  "readiness_score": <integer 0-100>,
-  "predicted_jobs": [
-    {
-      "title": "<job title>",
-      "year_emerging": "<2026-2040>",
-      "description": "<2 sentence description>",
-      "fit_score": <integer 0-100>,
-      "skills_needed": ["skill1", "skill2"],
-      "skills_you_have": ["skill1"]
-    }
-  ],
-  "gap_summary": "<1 sentence summary of biggest gap>",
-  "top_recommendation": "<1 actionable next step>"
-}
-Return exactly 4 predicted_jobs. No more, no less.`;
+Reply with ONLY a raw JSON object, no markdown, no explanation:
+{"readiness_score":42,"predicted_jobs":[{"title":"AI Product Manager","year_emerging":"2028","description":"Manages AI product development cycles. Works across engineering and business teams.","fit_score":75,"skills_needed":["Product Strategy","AI Literacy"],"skills_you_have":["Python"]},{"title":"ML Engineer","year_emerging":"2027","description":"Builds and deploys machine learning models. Optimises model performance at scale.","fit_score":80,"skills_needed":["MLOps","Kubernetes"],"skills_you_have":["Python","Machine Learning"]},{"title":"AI Ethics Specialist","year_emerging":"2029","description":"Ensures responsible AI deployment. Audits models for bias and fairness.","fit_score":60,"skills_needed":["Ethics Frameworks","Policy"],"skills_you_have":["Machine Learning"]},{"title":"Data Architect","year_emerging":"2027","description":"Designs data infrastructure for AI systems. Manages pipelines and storage.","fit_score":65,"skills_needed":["Cloud","Data Engineering"],"skills_you_have":["Python","SQL"]}],"gap_summary":"Biggest gap is in MLOps and cloud infrastructure skills.","top_recommendation":"Complete an MLOps certification on Coursera."}
+
+Now produce the SAME JSON structure but with values relevant to the student profile above. Return ONLY the JSON object.`;
+
+    return callNvidiaWithRetry(prompt, 1200);
+  },
+
+  async analyseSkillGap({ skills }) {
+    const prompt = `You are a workforce analytics AI analysing skill gaps for 2030 employers.
+
+Student current skills: ${skills.join(", ")}
+
+Reply with ONLY a raw JSON object, no markdown, no explanation:
+{"current_skills":[{"name":"Python","relevance_2030":85}],"future_demanded_skills":[{"name":"AI Collaboration","demand_score":95,"category":"ai-collaboration"},{"name":"Cloud Computing","demand_score":90,"category":"technical"},{"name":"Data Analysis","demand_score":88,"category":"technical"},{"name":"Critical Thinking","demand_score":85,"category":"human"},{"name":"Cybersecurity","demand_score":80,"category":"technical"},{"name":"Emotional Intelligence","demand_score":75,"category":"human"}],"gap_percentage":45,"missing_critical":["Cloud Computing","Cybersecurity"],"recommendations":[{"action":"Take AWS Cloud Practitioner certification","impact":"high"},{"action":"Build a personal project using an AI API","impact":"medium"},{"action":"Join an open source project on GitHub","impact":"low"}]}
+
+Now produce the SAME JSON structure but analysing the student's actual skills: ${skills.join(", ")}
+Return exactly 6 future_demanded_skills and 3 recommendations. Return ONLY the JSON object.`;
 
     return callNvidiaWithRetry(prompt, 1000);
   },
 
-  async analyseSkillGap({ skills }) {
-    const prompt = `You are a workforce analytics AI. Analyse the skill gap between what a student has now vs what 2030 employers will demand.
-
-Student current skills: ${skills.join(", ")}
-
-Respond ONLY with valid JSON:
-{
-  "current_skills": [{ "name": "skill", "relevance_2030": <0-100> }],
-  "future_demanded_skills": [
-    { "name": "skill", "demand_score": <0-100>, "category": "technical|human|ai-collaboration" }
-  ],
-  "gap_percentage": <integer 0-100>,
-  "missing_critical": ["skill1", "skill2"],
-  "recommendations": [
-    { "action": "<specific action>", "impact": "high|medium|low" }
-  ]
-}
-Return exactly 6 future_demanded_skills and 3 recommendations.`;
-
-    return callNvidiaWithRetry(prompt, 800);
-  },
-
   async analyseRepo({ repoData, languages, readme }) {
-    const prompt = `You are a technical project evaluator. Analyse this GitHub repository and assess the student's contribution.
+    const langList = Object.keys(languages).join(", ") || "Unknown";
+    const prompt = `You are a technical project evaluator.
 
-Repository info:
-- Name: ${repoData.name || "Unknown"}
-- Description: ${repoData.description || "None provided"}
-- Stars: ${repoData.stargazers_count || 0}
-- Languages: ${JSON.stringify(languages)}
-- README (first 2000 chars): ${readme}
+Repository: ${repoData.name || "Unknown"}
+Description: ${repoData.description || "No description"}
+Stars: ${repoData.stargazers_count || 0}
+Languages: ${langList}
+README: ${readme.slice(0, 600)}
 
-Respond ONLY with valid JSON:
-{
-  "title": "<clean project title>",
-  "description": "<2 sentence summary of what the project does>",
-  "tech_stack": ["tech1", "tech2"],
-  "contribution_level": "high|medium|low",
-  "contribution_reason": "<1 sentence why you rated it that level>",
-  "complexity_score": <1-10>,
-  "skills_demonstrated": ["skill1", "skill2", "skill3"]
-}`;
+Reply with ONLY a raw JSON object, no markdown, no explanation:
+{"title":"Project Name","description":"First sentence about what it does. Second sentence about the tech approach.","tech_stack":["React","Node.js","SQLite"],"contribution_level":"high","contribution_reason":"Well-structured full-stack project with clear architecture.","complexity_score":7,"skills_demonstrated":["React","API Design","Database Design"]}
 
-    return callNvidiaWithRetry(prompt, 600);
+Now produce the SAME JSON structure for the repository above.
+contribution_level must be exactly: high, medium, or low
+complexity_score must be an integer 1-10
+Return ONLY the JSON object.`;
+
+    return callNvidiaWithRetry(prompt, 700);
   }
 };
 
