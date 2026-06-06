@@ -135,30 +135,8 @@ This creates a collaborative environment that supports continuous career growth.
 
 # 🏗️ System Architecture
 
-```text
-                ┌─────────────────────┐
-                │     Frontend UI     │
-                └──────────┬──────────┘
-                           │
-                           ▼
-                ┌─────────────────────┐
-                │      Backend API    │
-                └──────────┬──────────┘
-                           │
-         ┌─────────────────┼─────────────────┐
-         ▼                 ▼                 ▼
- ┌────────────┐   ┌──────────────┐   ┌──────────────┐
- │ User Data  │   │ AI Engine    │   │ Skill Engine │
- └────────────┘   └──────────────┘   └──────────────┘
-         │                 │                 │
-         └─────────────────┼─────────────────┘
-                           ▼
-                  ┌────────────────┐
-                  │ Database Layer │
-                  └────────────────┘
-```
+<img width="624" height="750" alt="image" src="https://github.com/user-attachments/assets/c7821f4d-67e3-459a-ae31-0d8362d2c8f6" />
 
----
 
 # 🛠️ Technology Stack
 
