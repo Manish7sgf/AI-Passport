@@ -153,8 +153,7 @@ This creates a collaborative environment that supports continuous career growth.
 - MongoDB Atlas
 
 ### AI Integration
-- OpenAI API / Gemini API
-- Future Skill Analysis Engine
+- nvidia-nemotron-nano-9b-v2   API
 
 ### Authentication
 - JWT Authentication
