@@ -1,19 +1,30 @@
 const { nvidia } = require("../config/nvidia");
 
-const MODEL = "meta/llama-3.1-70b-instruct";
+const MODEL = "meta/llama-3.1-8b-instruct";
 
 async function callNvidiaWithRetry(prompt, maxTokens) {
+  const extractJson = (text) => {
+    // Strip markdown fences
+    let cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+    // Try direct parse first
+    try { return JSON.parse(cleaned); } catch {}
+    // Extract first JSON object or array from response
+    const objMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (objMatch) { try { return JSON.parse(objMatch[0]); } catch {} }
+    const arrMatch = cleaned.match(/\[[\s\S]*\]/);
+    if (arrMatch) { try { return JSON.parse(arrMatch[0]); } catch {} }
+    throw new Error("No valid JSON found in response");
+  };
+
   const attempt = async () => {
     const response = await nvidia.chat.completions.create({
       model: MODEL,
       max_tokens: maxTokens,
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.7
+      temperature: 0.3  // lower = more deterministic JSON output
     });
     const content = response.choices[0].message.content.trim();
-    // Strip markdown fences if model returns them despite instructions
-    const cleaned = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
-    return JSON.parse(cleaned);
+    return extractJson(content);
   };
 
   try {
@@ -84,25 +95,20 @@ Return exactly 6 future_demanded_skills and 3 recommendations.`;
   },
 
   async analyseRepo({ repoData, languages, readme }) {
-    const prompt = `You are a technical project evaluator. Analyse this GitHub repository and assess the student's contribution.
+    const prompt = `You are a technical project evaluator. Analyse this GitHub repository.
 
 Repository info:
 - Name: ${repoData.name || "Unknown"}
 - Description: ${repoData.description || "None provided"}
 - Stars: ${repoData.stargazers_count || 0}
 - Languages: ${JSON.stringify(languages)}
-- README (first 2000 chars): ${readme}
+- README excerpt: ${readme.slice(0, 800)}
 
-Respond ONLY with valid JSON:
-{
-  "title": "<clean project title>",
-  "description": "<2 sentence summary of what the project does>",
-  "tech_stack": ["tech1", "tech2"],
-  "contribution_level": "high|medium|low",
-  "contribution_reason": "<1 sentence why you rated it that level>",
-  "complexity_score": <1-10>,
-  "skills_demonstrated": ["skill1", "skill2", "skill3"]
-}`;
+Respond ONLY with this exact valid JSON (no markdown, no explanation):
+{"title":"project title","description":"2 sentence description of what it does","tech_stack":["tech1","tech2","tech3"],"contribution_level":"high","contribution_reason":"one sentence reason","complexity_score":7,"skills_demonstrated":["skill1","skill2","skill3"]}
+
+contribution_level must be exactly one of: high, medium, low
+complexity_score must be an integer 1-10`;
 
     return callNvidiaWithRetry(prompt, 600);
   }
