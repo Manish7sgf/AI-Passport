@@ -51,7 +51,9 @@ export default function Auth() {
   };
 
   const handleGitHub = () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/github`;
+    // Strip /api suffix — the OAuth route is at /api/auth/github, not /auth/github
+    const base = import.meta.env.VITE_API_BASE_URL.replace(/\/api\/?$/, "");
+    window.location.href = `${base}/api/auth/github`;
   };
 
   return (

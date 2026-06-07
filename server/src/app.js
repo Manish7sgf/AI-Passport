@@ -46,6 +46,9 @@ app.get("/api/health", (req, res) => {
   res.json({ success: true, data: { status: "ok", timestamp: new Date().toISOString() } });
 });
 
+// Keep-alive ping — lightweight, no DB hit, used by frontend to prevent Render spin-down
+app.get("/api/ping", (req, res) => res.send("pong"));
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ success: false, error: "Route not found" });

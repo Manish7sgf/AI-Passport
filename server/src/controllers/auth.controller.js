@@ -7,7 +7,8 @@ const PassportModel = require("../models/passport.model");
 const signToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-const FRONTEND_URL = process.env.CLIENT_URL || "http://localhost:5173";
+// Reads from env — no hardcoded URL
+const getFrontendUrl = () => process.env.CLIENT_URL || "http://localhost:5173";
 
 const AuthController = {
   async register(req, res, next) {
@@ -21,14 +22,15 @@ const AuthController = {
         return res.status(400).json({ success: false, error: "Password must be at least 8 characters" });
       }
 
-      const existing = UserModel.findByEmail(email);
+      // await — UserModel is now async (pg)
+      const existing = await UserModel.findByEmail(email);
       if (existing) {
         return res.status(409).json({ success: false, error: "Email already registered" });
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
-      const user = UserModel.create({ email, name, passwordHash });
-      PassportModel.create(user.id);
+      const user = await UserModel.create({ email, name, passwordHash });
+      await PassportModel.create(user.id);
 
       const token = signToken(user.id);
       res.status(201).json({
@@ -48,7 +50,8 @@ const AuthController = {
         return res.status(400).json({ success: false, error: "Email and password are required" });
       }
 
-      const user = UserModel.findByEmail(email);
+      // await — async pg call
+      const user = await UserModel.findByEmail(email);
       if (!user || !user.password_hash) {
         return res.status(401).json({ success: false, error: "Invalid email or password" });
       }
@@ -77,6 +80,7 @@ const AuthController = {
   },
 
   async githubCallback(req, res, next) {
+    const FRONTEND_URL = getFrontendUrl();
     try {
       const { code } = req.query;
       if (!code) return res.redirect(`${FRONTEND_URL}/auth?error=github_denied`);
@@ -107,14 +111,18 @@ const AuthController = {
       let email = profile.email;
       if (!email) {
         const emailsRes = await fetch("https://api.github.com/user/emails", {
-          headers: { Authorization: `token ${tokenData.access_token}`, Accept: "application/vnd.github.v3+json" }
+          headers: {
+            Authorization: `token ${tokenData.access_token}`,
+            Accept: "application/vnd.github.v3+json"
+          }
         });
         const emails = await emailsRes.json();
         const primary = emails.find((e) => e.primary && e.verified);
         email = primary ? primary.email : `${profile.login}@github.local`;
       }
 
-      const user = UserModel.upsertGithubUser({
+      // await — async pg calls
+      const user = await UserModel.upsertGithubUser({
         email,
         name: profile.name || profile.login,
         githubUsername: profile.login,
@@ -122,7 +130,7 @@ const AuthController = {
         avatarUrl: profile.avatar_url
       });
 
-      PassportModel.create(user.id);
+      await PassportModel.create(user.id);
       const token = signToken(user.id);
       res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
     } catch (err) {
