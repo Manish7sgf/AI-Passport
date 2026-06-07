@@ -118,3 +118,5 @@ VITE_GITHUB_CLIENT_ID=your_github_oauth_client_id
 8. Return to dashboard → updated score ring
 
 > "This is not a course platform. This is proof of value in an AI world."
+
+Live Demo link: https://ai-passport-ebon.vercel.app/auth
