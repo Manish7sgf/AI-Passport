@@ -6,8 +6,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // Only used in local dev — production uses VITE_API_BASE_URL directly
       "/api": {
-        target: "http://localhost:5000",
+        target: process.env.VITE_API_BASE_URL
+          ? process.env.VITE_API_BASE_URL.replace("/api", "")
+          : "http://localhost:5000",
         changeOrigin: true
       }
     }

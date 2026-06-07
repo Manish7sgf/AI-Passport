@@ -8,7 +8,10 @@ async function start() {
   const PORT = process.env.PORT || 5000;
 
   app.listen(PORT, () => {
-    console.log(`🚀 AI Future Passport server running on http://localhost:${PORT}`);
+    const base = process.env.NODE_ENV === "production"
+      ? `https://ai-passport.onrender.com`
+      : `http://localhost:${PORT}`;
+    console.log(`🚀 AI Future Passport server running on ${base}`);
   });
 }
 

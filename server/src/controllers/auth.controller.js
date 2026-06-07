@@ -7,7 +7,7 @@ const PassportModel = require("../models/passport.model");
 const signToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-const FRONTEND_URL = "https://ai-passport-ebon.vercel.app";
+const FRONTEND_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 const AuthController = {
   async register(req, res, next) {
