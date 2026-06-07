@@ -5,8 +5,6 @@ const PassportController = {
   async getPassport(req, res, next) {
     try {
       const { userId } = req.params;
-
-      // Users can only access their own passport
       if (req.user.id !== userId) {
         return res.status(403).json({ success: false, error: "Forbidden" });
       }
@@ -25,14 +23,12 @@ const PassportController = {
   async updatePassport(req, res, next) {
     try {
       const { userId } = req.params;
-
       if (req.user.id !== userId) {
         return res.status(403).json({ success: false, error: "Forbidden" });
       }
 
       const { bio, skills, interests, hackathons, mentoring_sessions, open_source_prs } = req.body;
 
-      // Validate arrays
       if (skills !== undefined && !Array.isArray(skills)) {
         return res.status(400).json({ success: false, error: "Skills must be an array" });
       }
@@ -40,12 +36,16 @@ const PassportController = {
         return res.status(400).json({ success: false, error: "Interests must be an array" });
       }
 
-      const updated = await PassportModel.update(userId, {
+      // Update passport fields
+      await PassportModel.update(userId, {
         bio, skills, interests, hackathons, mentoring_sessions, open_source_prs
       });
 
-      // Recalculate score
+      // Always recalculate score after any passport update
       const scoreData = await ScoreService.calculateScore(userId);
+
+      // Return fresh passport with updated score embedded
+      const updated = await PassportModel.findByUserId(userId);
 
       res.json({
         success: true,
@@ -59,11 +59,11 @@ const PassportController = {
   async getScore(req, res, next) {
     try {
       const { userId } = req.params;
-
       if (req.user.id !== userId) {
         return res.status(403).json({ success: false, error: "Forbidden" });
       }
 
+      // Always recalculate — never serve stale score
       const scoreData = await ScoreService.calculateScore(userId);
       res.json({ success: true, data: scoreData });
     } catch (err) {

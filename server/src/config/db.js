@@ -51,6 +51,7 @@ async function initDb() {
         ai_summary TEXT,
         contribution_level VARCHAR(50),
         verified BOOLEAN DEFAULT FALSE,
+        source VARCHAR(50) DEFAULT 'manual',
         created_at TIMESTAMP DEFAULT NOW()
       );
 
@@ -73,6 +74,11 @@ async function initDb() {
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
+    // Migration: add source column if it doesn't exist (for existing DBs)
+    await client.query(`
+      ALTER TABLE portfolio_items ADD COLUMN IF NOT EXISTS source VARCHAR(50) DEFAULT 'manual';
+    `);
+
     console.log("✅ PostgreSQL connected and tables ready");
   } finally {
     client.release();

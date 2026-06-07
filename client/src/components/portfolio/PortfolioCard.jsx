@@ -53,21 +53,15 @@ export default function PortfolioCard({ item, onRemove, showRemove = true }) {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", paddingRight: "24px" }}>
-        <span
-          style={{
-            fontFamily: "var(--font)",
-            fontSize: "14px",
-            fontWeight: "500",
-            color: "var(--text-primary)"
-          }}
-        >
+        <span style={{ fontFamily: "var(--font)", fontSize: "14px", fontWeight: "500", color: "var(--text-primary)" }}>
           {item.title || "Untitled Project"}
         </span>
         <Badge variant={contributionVariant}>
           {item.contribution_level || "unverified"}
         </Badge>
-        {item.verified && (
-          <Badge variant="green">verified</Badge>
+        {item.verified && <Badge variant="green">AI verified</Badge>}
+        {!item.verified && item.source === "github_sync" && (
+          <Badge variant="default" style={{ fontSize: "10px" }}>GitHub</Badge>
         )}
       </div>
 

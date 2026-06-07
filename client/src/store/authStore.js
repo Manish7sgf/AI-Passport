@@ -51,8 +51,6 @@ const useAuthStore = create((set, get) => ({
       const data = await authAPI.me();
       set({ user: data.user, isAuthenticated: true, isInitialising: false });
     } catch (err) {
-      // Only invalidate session on a definitive 401 — not on network/timeout errors
-      // (Render free tier spins down and can cause transient failures)
       const isAuthFailure =
         err.message?.toLowerCase().includes("unauthorized") ||
         err.message?.toLowerCase().includes("token expired");
@@ -61,7 +59,6 @@ const useAuthStore = create((set, get) => ({
         localStorage.removeItem("token");
         set({ user: null, token: null, isAuthenticated: false, isInitialising: false });
       } else {
-        // Network error — keep the existing token and session intact
         set({ isInitialising: false });
       }
     }

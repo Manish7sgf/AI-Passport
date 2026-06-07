@@ -84,3 +84,9 @@ export const scoreAPI = {
   get:         (userId) => api.get(`/score/${userId}`),
   recalculate: ()       => api.post("/score/recalculate")
 };
+
+// ── GitHub Sync ───────────────────────────────────────────────────────────────
+export const githubAPI = {
+  sync:   () => api.post("/github/sync"),
+  status: () => api.get("/github/status")
+};

@@ -10,6 +10,7 @@ const timemachineRoutes = require("./routes/timemachine.routes");
 const radarRoutes = require("./routes/radar.routes");
 const portfolioRoutes = require("./routes/portfolio.routes");
 const scoreRoutes = require("./routes/score.routes");
+const githubRoutes = require("./routes/github.routes");
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use("/api/timemachine", timemachineRoutes);
 app.use("/api/radar", radarRoutes);
 app.use("/api/portfolio", portfolioRoutes);
 app.use("/api/score", scoreRoutes);
+app.use("/api/github", githubRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
