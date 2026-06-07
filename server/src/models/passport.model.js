@@ -1,79 +1,61 @@
-const db = require("../config/db");
-const { v4: uuidv4 } = require("uuid");
+const { pool } = require("../config/db");
 
 const PassportModel = {
-  findByUserId(userId) {
-    const passport = db
-      .prepare("SELECT * FROM passports WHERE user_id = ?")
-      .get(userId);
-
-    if (!passport) return null;
-
-    // Parse JSON fields
-    passport.skills = JSON.parse(passport.skills || "[]");
-    passport.interests = JSON.parse(passport.interests || "[]");
-    passport.score_breakdown = JSON.parse(passport.score_breakdown || "{}");
-
-    // Attach counts
-    passport.portfolio_count = db
-      .prepare("SELECT COUNT(*) as count FROM portfolio_items WHERE user_id = ?")
-      .get(userId).count;
-
-    passport.simulations_count = db
-      .prepare("SELECT COUNT(*) as count FROM career_simulations WHERE user_id = ?")
-      .get(userId).count;
-
-    return passport;
-  },
-
-  create(userId) {
-    const existing = db
-      .prepare("SELECT id FROM passports WHERE user_id = ?")
-      .get(userId);
-    if (existing) return this.findByUserId(userId);
-
-    const id = uuidv4();
-    db.prepare(
-      "INSERT INTO passports (id, user_id) VALUES (?, ?)"
-    ).run(id, userId);
-    return this.findByUserId(userId);
-  },
-
-  update(userId, { bio, skills, interests, hackathons, mentoring_sessions, open_source_prs }) {
-    const current = db.prepare("SELECT * FROM passports WHERE user_id = ?").get(userId);
-    if (!current) return null;
-
-    const updated = {
-      bio: bio !== undefined ? bio : current.bio,
-      skills: skills !== undefined ? JSON.stringify(skills) : current.skills,
-      interests: interests !== undefined ? JSON.stringify(interests) : current.interests,
-      hackathons: hackathons !== undefined ? hackathons : current.hackathons,
-      mentoring_sessions: mentoring_sessions !== undefined ? mentoring_sessions : current.mentoring_sessions,
-      open_source_prs: open_source_prs !== undefined ? open_source_prs : current.open_source_prs
-    };
-
-    db.prepare(`
-      UPDATE passports SET
-        bio = ?, skills = ?, interests = ?, hackathons = ?,
-        mentoring_sessions = ?, open_source_prs = ?,
-        last_updated = datetime('now')
-      WHERE user_id = ?
-    `).run(
-      updated.bio, updated.skills, updated.interests,
-      updated.hackathons, updated.mentoring_sessions, updated.open_source_prs,
-      userId
+  async findByUserId(userId) {
+    const { rows } = await pool.query(
+      `SELECT p.*,
+         (SELECT COUNT(*)::int FROM portfolio_items  WHERE user_id = $1) AS portfolio_count,
+         (SELECT COUNT(*)::int FROM career_simulations WHERE user_id = $1) AS simulations_count
+       FROM passports p
+       WHERE p.user_id = $1`,
+      [userId]
     );
-
-    return this.findByUserId(userId);
+    return rows[0] || null;
   },
 
-  updateScore(userId, score, breakdown) {
-    db.prepare(`
-      UPDATE passports SET
-        employability_score = ?, score_breakdown = ?, last_updated = datetime('now')
-      WHERE user_id = ?
-    `).run(score, JSON.stringify(breakdown), userId);
-    return this.findByUserId(userId);
+  async create(userId) {
+    const { rows } = await pool.query(
+      `INSERT INTO passports (user_id)
+       VALUES ($1)
+       ON CONFLICT (user_id) DO NOTHING
+       RETURNING *`,
+      [userId]
+    );
+    // If row already existed DO NOTHING returns nothing — fetch it
+    return rows[0] || (await this.findByUserId(userId));
+  },
+
+  async update(userId, { bio, skills, interests, hackathons, mentoring_sessions, open_source_prs }) {
+    const fields = [];
+    const values = [];
+    let idx = 1;
+
+    if (bio               !== undefined) { fields.push(`bio = $${idx++}`);               values.push(bio); }
+    if (skills            !== undefined) { fields.push(`skills = $${idx++}`);            values.push(JSON.stringify(skills)); }
+    if (interests         !== undefined) { fields.push(`interests = $${idx++}`);         values.push(JSON.stringify(interests)); }
+    if (hackathons        !== undefined) { fields.push(`hackathons = $${idx++}`);        values.push(hackathons); }
+    if (mentoring_sessions!== undefined) { fields.push(`mentoring_sessions = $${idx++}`);values.push(mentoring_sessions); }
+    if (open_source_prs   !== undefined) { fields.push(`open_source_prs = $${idx++}`);  values.push(open_source_prs); }
+
+    if (fields.length === 0) return this.findByUserId(userId);
+
+    fields.push(`last_updated = NOW()`);
+    values.push(userId);
+
+    const { rows } = await pool.query(
+      `UPDATE passports SET ${fields.join(", ")} WHERE user_id = $${idx} RETURNING *`,
+      values
+    );
+    return rows[0] || null;
+  },
+
+  async updateScore(userId, score, breakdown) {
+    await pool.query(
+      `UPDATE passports
+       SET employability_score = $1, score_breakdown = $2, last_updated = NOW()
+       WHERE user_id = $3`,
+      [score, JSON.stringify(breakdown), userId]
+    );
   }
 };
 

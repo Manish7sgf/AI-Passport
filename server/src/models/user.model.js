@@ -1,45 +1,45 @@
-const db = require("../config/db");
-const { v4: uuidv4 } = require("uuid");
+const { pool } = require("../config/db");
 
 const UserModel = {
-  findByEmail(email) {
-    return db.prepare("SELECT * FROM users WHERE email = ?").get(email) || null;
-  },
-
-  findById(id) {
-    return (
-      db
-        .prepare("SELECT id, email, name, github_username, avatar_url, created_at FROM users WHERE id = ?")
-        .get(id) || null
+  async findByEmail(email) {
+    const { rows } = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
     );
+    return rows[0] || null;
   },
 
-  findByGithubUsername(username) {
-    return db.prepare("SELECT * FROM users WHERE github_username = ?").get(username) || null;
+  async findById(id) {
+    const { rows } = await pool.query(
+      "SELECT id, email, name, github_username, avatar_url, created_at FROM users WHERE id = $1",
+      [id]
+    );
+    return rows[0] || null;
   },
 
-  create({ email, name, passwordHash }) {
-    const id = uuidv4();
-    db.prepare(
-      "INSERT INTO users (id, email, name, password_hash) VALUES (?, ?, ?, ?)"
-    ).run(id, email, name, passwordHash);
-    return this.findById(id);
+  async create({ email, name, passwordHash }) {
+    const { rows } = await pool.query(
+      `INSERT INTO users (email, name, password_hash)
+       VALUES ($1, $2, $3)
+       RETURNING id, email, name, avatar_url, created_at`,
+      [email, name, passwordHash]
+    );
+    return rows[0];
   },
 
-  upsertGithubUser({ email, name, githubUsername, githubToken, avatarUrl }) {
-    const existing = this.findByEmail(email);
-    if (existing) {
-      db.prepare(
-        `UPDATE users SET github_username = ?, github_token = ?, avatar_url = ?, name = ? WHERE email = ?`
-      ).run(githubUsername, githubToken, avatarUrl, name, email);
-      return this.findById(existing.id);
-    } else {
-      const id = uuidv4();
-      db.prepare(
-        "INSERT INTO users (id, email, name, github_username, github_token, avatar_url) VALUES (?, ?, ?, ?, ?, ?)"
-      ).run(id, email, name, githubUsername, githubToken, avatarUrl);
-      return this.findById(id);
-    }
+  async upsertGithubUser({ email, name, githubUsername, githubToken, avatarUrl }) {
+    const { rows } = await pool.query(
+      `INSERT INTO users (email, name, github_username, github_token, avatar_url)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (email) DO UPDATE SET
+         github_username = EXCLUDED.github_username,
+         github_token    = EXCLUDED.github_token,
+         avatar_url      = EXCLUDED.avatar_url,
+         name            = EXCLUDED.name
+       RETURNING id, email, name, github_username, avatar_url, created_at`,
+      [email, name, githubUsername, githubToken, avatarUrl]
+    );
+    return rows[0];
   }
 };
 

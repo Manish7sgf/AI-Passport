@@ -1,10 +1,9 @@
 const jwt = require("jsonwebtoken");
-const db = require("../config/db");
+const { pool } = require("../config/db");
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ success: false, error: "Unauthorized" });
     }
@@ -12,15 +11,16 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = db
-      .prepare("SELECT id, email, name, github_username, avatar_url FROM users WHERE id = ?")
-      .get(decoded.userId);
+    const { rows } = await pool.query(
+      "SELECT id, email, name, github_username, avatar_url FROM users WHERE id = $1",
+      [decoded.userId]
+    );
 
-    if (!user) {
+    if (rows.length === 0) {
       return res.status(401).json({ success: false, error: "Unauthorized" });
     }
 
-    req.user = user;
+    req.user = rows[0];
     next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {

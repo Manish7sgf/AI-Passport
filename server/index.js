@@ -1,9 +1,8 @@
 require("dotenv").config();
-const db = require("./src/config/db");
+const { initDb } = require("./src/config/db");
 
 async function start() {
-  // Initialize SQLite before accepting requests
-  await db.init();
+  await initDb();
 
   const app = require("./src/app");
   const PORT = process.env.PORT || 5000;
@@ -14,6 +13,6 @@ async function start() {
 }
 
 start().catch((err) => {
-  console.error("Failed to start server:", err);
+  console.error("❌ Failed to start server:", err.message);
   process.exit(1);
 });

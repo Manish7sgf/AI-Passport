@@ -1,5 +1,4 @@
-const db = require("../config/db");
-const { v4: uuidv4 } = require("uuid");
+const { pool } = require("../config/db");
 const NvidiaService = require("../services/nvidia.service");
 
 const TimeMachineController = {
@@ -16,19 +15,12 @@ const TimeMachineController = {
       }
 
       const interestList = Array.isArray(interests) ? interests : [];
-
       const result = await NvidiaService.predictCareers({ skills, interests: interestList });
 
-      // Save to career_simulations
-      db.prepare(`
-        INSERT INTO career_simulations (id, user_id, input_skills, predicted_jobs, readiness_score)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(
-        uuidv4(),
-        req.user.id,
-        JSON.stringify(skills),
-        JSON.stringify(result.predicted_jobs),
-        result.readiness_score
+      await pool.query(
+        `INSERT INTO career_simulations (user_id, input_skills, predicted_jobs, readiness_score)
+         VALUES ($1, $2, $3, $4)`,
+        [req.user.id, JSON.stringify(skills), JSON.stringify(result.predicted_jobs), result.readiness_score]
       );
 
       res.json({
@@ -45,19 +37,13 @@ const TimeMachineController = {
     }
   },
 
-  history(req, res, next) {
+  async history(req, res, next) {
     try {
-      const rows = db
-        .prepare("SELECT * FROM career_simulations WHERE user_id = ? ORDER BY created_at DESC LIMIT 10")
-        .all(req.user.id);
-
-      const parsed = rows.map((r) => ({
-        ...r,
-        input_skills: JSON.parse(r.input_skills || "[]"),
-        predicted_jobs: JSON.parse(r.predicted_jobs || "[]")
-      }));
-
-      res.json({ success: true, data: parsed });
+      const { rows } = await pool.query(
+        "SELECT * FROM career_simulations WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10",
+        [req.user.id]
+      );
+      res.json({ success: true, data: rows });
     } catch (err) {
       next(err);
     }

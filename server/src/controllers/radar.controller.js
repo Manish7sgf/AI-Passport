@@ -1,5 +1,4 @@
-const db = require("../config/db");
-const { v4: uuidv4 } = require("uuid");
+const { pool } = require("../config/db");
 const NvidiaService = require("../services/nvidia.service");
 
 const RadarController = {
@@ -17,26 +16,26 @@ const RadarController = {
 
       const result = await NvidiaService.analyseSkillGap({ skills });
 
-      db.prepare(`
-        INSERT INTO skill_gaps (id, user_id, current_skills, future_skills, gap_percentage, recommendations)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(
-        uuidv4(),
-        req.user.id,
-        JSON.stringify(result.current_skills),
-        JSON.stringify(result.future_demanded_skills),
-        result.gap_percentage,
-        JSON.stringify(result.recommendations)
+      await pool.query(
+        `INSERT INTO skill_gaps (user_id, current_skills, future_skills, gap_percentage, recommendations)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          req.user.id,
+          JSON.stringify(result.current_skills),
+          JSON.stringify(result.future_demanded_skills),
+          result.gap_percentage,
+          JSON.stringify(result.recommendations)
+        ]
       );
 
       res.json({
         success: true,
         data: {
-          current_skills: result.current_skills,
+          current_skills:       result.current_skills,
           future_demanded_skills: result.future_demanded_skills,
-          gap_percentage: result.gap_percentage,
-          missing_critical: result.missing_critical,
-          recommendations: result.recommendations
+          gap_percentage:       result.gap_percentage,
+          missing_critical:     result.missing_critical,
+          recommendations:      result.recommendations
         }
       });
     } catch (err) {
@@ -44,23 +43,23 @@ const RadarController = {
     }
   },
 
-  latest(req, res, next) {
+  async latest(req, res, next) {
     try {
-      const row = db
-        .prepare("SELECT * FROM skill_gaps WHERE user_id = ? ORDER BY created_at DESC LIMIT 1")
-        .get(req.user.id);
+      const { rows } = await pool.query(
+        "SELECT * FROM skill_gaps WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1",
+        [req.user.id]
+      );
 
-      if (!row) {
-        return res.json({ success: true, data: null });
-      }
+      if (rows.length === 0) return res.json({ success: true, data: null });
 
+      const row = rows[0];
       res.json({
         success: true,
         data: {
           ...row,
-          current_skills: JSON.parse(row.current_skills || "[]"),
-          future_demanded_skills: JSON.parse(row.future_skills || "[]"),
-          recommendations: JSON.parse(row.recommendations || "[]")
+          current_skills:         row.current_skills,
+          future_demanded_skills: row.future_skills,
+          recommendations:        row.recommendations
         }
       });
     } catch (err) {
