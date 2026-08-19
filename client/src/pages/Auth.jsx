@@ -57,104 +57,143 @@ export default function Auth() {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      {/* Left panel */}
-      <div
-        style={{
-          width: "40%",
-          background: "var(--accent)",
-          display: "flex",
-          flexDirection: "column",
-          padding: "40px",
-          position: "relative"
-        }}
-      >
+    <div className="auth-page">
+      {/* Left branding panel */}
+      <div className="auth-hero-panel">
         <div>
-          <span
-            style={{
-              fontFamily: "var(--font)",
-              fontSize: "28px",
-              fontWeight: "500",
-              color: "var(--accent-text)",
-              letterSpacing: "-0.02em"
-            }}
-          >
-            AFP
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "8px",
+                background: "var(--accent-text)",
+                color: "var(--accent)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "var(--font)",
+                fontSize: "14px",
+                fontWeight: "700"
+              }}
+            >
+              FP
+            </div>
+            <span
+              style={{
+                fontFamily: "var(--font)",
+                fontSize: "24px",
+                fontWeight: "600",
+                color: "var(--accent-text)",
+                letterSpacing: "-0.02em"
+              }}
+            >
+              AI Passport
+            </span>
+          </div>
           <p
             style={{
               fontFamily: "var(--font-body)",
-              fontSize: "13px",
-              color: "rgba(245,244,240,0.6)",
-              marginTop: "8px"
+              fontSize: "14px",
+              color: "rgba(245,244,240,0.7)",
+              marginTop: "12px",
+              lineHeight: "1.5"
             }}
           >
-            Your future, verified.
+            AI-era proof of work, skill gap radar, and future employability passport.
           </p>
         </div>
 
-        {/* Stats */}
-        <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* Authentic Platform Highlights (Desktop / Tablet) */}
+        <div
+          className="auth-features-list"
+          style={{ display: "flex", flexDirection: "column", gap: "20px", marginTop: "32px" }}
+        >
           {[
-            { value: "12,400", label: "students" },
-            { value: "2030", label: "ready" },
-            { value: "AI", label: "verified" }
-          ].map(({ value, label }) => (
-            <div key={label}>
-              <div
+            {
+              num: "01",
+              title: "AI Repository Verification",
+              desc: "Deep analysis of code complexity, tech stack, and skills demonstrated."
+            },
+            {
+              num: "02",
+              title: "2030 Skill Gap Radar",
+              desc: "Benchmark your skills against future demand with actionable recommendations."
+            },
+            {
+              num: "03",
+              title: "Career Time Machine",
+              desc: "Predict your fit for emerging AI-era job roles across 2025–2040."
+            },
+            {
+              num: "04",
+              title: "Verified Public Passport",
+              desc: "Share your tamper-proof employability score with recruiters and peers."
+            }
+          ].map(({ num, title, desc }) => (
+            <div key={num} style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
+              <span
                 style={{
                   fontFamily: "var(--font)",
-                  fontSize: "28px",
-                  fontWeight: "500",
-                  color: "var(--accent-text)",
-                  lineHeight: 1
+                  fontSize: "12px",
+                  color: "rgba(245,244,240,0.4)",
+                  fontWeight: "600",
+                  marginTop: "2px"
                 }}
               >
-                {value}
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font)",
-                  fontSize: "11px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.12em",
-                  color: "rgba(245,244,240,0.5)",
-                  marginTop: "4px"
-                }}
-              >
-                {label}
+                {num}
+              </span>
+              <div>
+                <div
+                  style={{
+                    fontFamily: "var(--font)",
+                    fontSize: "13px",
+                    fontWeight: "500",
+                    color: "var(--accent-text)",
+                    marginBottom: "2px"
+                  }}
+                >
+                  {title}
+                </div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "rgba(245,244,240,0.6)",
+                    lineHeight: "1.4"
+                  }}
+                >
+                  {desc}
+                </div>
               </div>
             </div>
           ))}
         </div>
+
+        {/* Footer note */}
+        <div style={{ marginTop: "24px", fontSize: "11px", color: "rgba(245,244,240,0.4)", fontFamily: "var(--font)" }}>
+          AI FUTURE PASSPORT
+        </div>
       </div>
 
-      {/* Right panel */}
-      <div
-        style={{
-          flex: 1,
-          background: "var(--surface)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "40px"
-        }}
-      >
+      {/* Right form panel */}
+      <div className="auth-form-panel">
         <div style={{ width: "100%", maxWidth: "380px" }}>
           <h1
             style={{
               fontFamily: "var(--font)",
-              fontSize: "28px",
-              fontWeight: "500",
+              fontSize: "26px",
+              fontWeight: "600",
               color: "var(--text-primary)",
               marginBottom: "8px",
               letterSpacing: "-0.02em"
             }}
           >
-            {mode === "login" ? "Welcome back" : "Create account"}
+            {mode === "login" ? "Welcome back" : "Create your passport"}
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "32px" }}>
-            {mode === "login" ? "Sign in to your passport" : "Start building your AI future"}
+          <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "28px" }}>
+            {mode === "login"
+              ? "Sign in to manage your AI employability profile"
+              : "Start verifying projects and tracking future skills"}
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -162,14 +201,14 @@ export default function Auth() {
               <Input
                 label="Full Name"
                 type="text"
-                placeholder="Your name"
+                placeholder="e.g. Alex Morgan"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 fullWidth
               />
             )}
             <Input
-              label="Email"
+              label="Email Address"
               type="email"
               placeholder="you@example.com"
               value={email}
@@ -179,7 +218,7 @@ export default function Auth() {
             <Input
               label="Password"
               type="password"
-              placeholder={mode === "register" ? "Min 8 characters" : "Your password"}
+              placeholder={mode === "register" ? "At least 8 characters" : "Your password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               fullWidth
@@ -201,7 +240,7 @@ export default function Auth() {
             )}
 
             <Button type="submit" fullWidth disabled={isLoading}>
-              {isLoading ? "Loading..." : mode === "login" ? "Sign in" : "Create account"}
+              {isLoading ? "Authenticating..." : mode === "login" ? "Sign in →" : "Create account →"}
             </Button>
           </form>
 
@@ -233,15 +272,16 @@ export default function Auth() {
               marginTop: "24px"
             }}
           >
-            {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+            {mode === "login" ? "Don't have a passport yet?" : "Already have an account?"}{" "}
             <button
+              type="button"
               onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }}
               style={{
                 background: "none",
                 border: "none",
                 cursor: "pointer",
                 color: "var(--text-primary)",
-                fontWeight: "500",
+                fontWeight: "600",
                 fontSize: "13px",
                 textDecoration: "underline",
                 fontFamily: "var(--font-body)"

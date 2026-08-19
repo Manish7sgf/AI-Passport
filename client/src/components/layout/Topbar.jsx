@@ -49,7 +49,7 @@ export default function Topbar({
         gap: "12px"
       }}
     >
-      {/* Left side: Navigation toggles & Title */}
+      {/* Left side: Mobile menu toggle & Page Title */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         {/* Mobile Hamburger Button */}
         <button
@@ -71,34 +71,10 @@ export default function Topbar({
           <HamburgerIcon size={16} />
         </button>
 
-        {/* Desktop Collapse / Expand Button */}
-        <button
-          className="desktop-only"
-          onClick={onToggleCollapse}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          style={{
-            background: "none",
-            border: "0.5px solid var(--border)",
-            borderRadius: "var(--radius)",
-            padding: "6px 8px",
-            cursor: "pointer",
-            color: "var(--text-secondary)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "color 0.15s, border-color 0.15s"
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
-        >
-          <CollapseIcon collapsed={collapsed} size={15} />
-        </button>
-
         <span
           style={{
             fontFamily: "var(--font)",
-            fontSize: "13px",
+            fontSize: "14px",
             fontWeight: "600",
             color: "var(--text-primary)",
             textTransform: "uppercase",
@@ -191,27 +167,6 @@ function HamburgerIcon({ size = 16 }) {
       <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" />
       <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />
       <line x1="3" y1="18" x2="21" y2="18" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CollapseIcon({ collapsed, size = 15 }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      style={{
-        transform: collapsed ? "rotate(180deg)" : "rotate(0deg)",
-        transition: "transform 0.25s ease"
-      }}
-    >
-      <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="1.5" />
-      <path d="M9 3v18" strokeWidth="1.5" />
-      <path d="M15 15l-3-3 3-3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

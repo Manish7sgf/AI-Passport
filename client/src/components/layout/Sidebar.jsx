@@ -16,6 +16,7 @@ const navItems = [
 export default function Sidebar({
   collapsed = false,
   mobileOpen = false,
+  onToggleCollapse,
   onCloseMobile
 }) {
   const { user, logout } = useAuthStore();
@@ -53,15 +54,16 @@ export default function Sidebar({
       }}
       className={`app-sidebar ${mobileOpen ? "sidebar-mobile-open" : ""}`}
     >
-      {/* Brand & Close */}
+      {/* Brand & Collapse Toggle */}
       <div
         style={{
-          padding: collapsed ? "16px 8px" : "16px 18px",
+          padding: collapsed ? "16px 8px" : "16px 16px",
           borderBottom: "0.5px solid var(--border)",
           display: "flex",
           alignItems: "center",
           justifyContent: collapsed ? "center" : "space-between",
-          height: "var(--topbar-height)"
+          height: "var(--topbar-height)",
+          gap: "8px"
         }}
       >
         <NavLink
@@ -71,13 +73,14 @@ export default function Sidebar({
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            textDecoration: "none"
+            textDecoration: "none",
+            minWidth: 0
           }}
         >
           <div
             style={{
-              width: 30,
-              height: 30,
+              width: 32,
+              height: 32,
               borderRadius: "6px",
               background: "var(--text-primary)",
               color: "var(--accent-text)",
@@ -107,6 +110,70 @@ export default function Sidebar({
             </span>
           )}
         </NavLink>
+
+        {/* Desktop Collapse / Expand Toggle Button in Sidebar Header */}
+        {!collapsed ? (
+          <button
+            className="desktop-only"
+            onClick={onToggleCollapse}
+            title="Collapse sidebar"
+            aria-label="Collapse sidebar"
+            style={{
+              background: "none",
+              border: "0.5px solid var(--border)",
+              borderRadius: "var(--radius)",
+              padding: "5px 7px",
+              cursor: "pointer",
+              color: "var(--text-secondary)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.15s ease",
+              flexShrink: 0
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--text-primary)";
+              e.currentTarget.style.borderColor = "var(--border-strong)";
+              e.currentTarget.style.background = "var(--bg-secondary)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--text-secondary)";
+              e.currentTarget.style.borderColor = "var(--border)";
+              e.currentTarget.style.background = "none";
+            }}
+          >
+            <CollapseToggleIcon collapsed={false} size={14} />
+          </button>
+        ) : (
+          <button
+            className="desktop-only"
+            onClick={onToggleCollapse}
+            title="Expand sidebar"
+            aria-label="Expand sidebar"
+            style={{
+              position: "absolute",
+              top: "14px",
+              right: "-12px",
+              background: "var(--surface)",
+              border: "0.5px solid var(--border)",
+              borderRadius: "50%",
+              width: "24px",
+              height: "24px",
+              cursor: "pointer",
+              color: "var(--text-primary)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              zIndex: 60,
+              transition: "transform 0.15s ease, background 0.15s ease"
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          >
+            <CollapseToggleIcon collapsed={true} size={12} />
+          </button>
+        )}
 
         {/* Mobile close button */}
         <button
@@ -420,6 +487,29 @@ function SignOutIcon({ size = 16 }) {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" strokeLinecap="round" strokeLinejoin="round" />
       <polyline points="16 17 21 12 16 7" strokeLinecap="round" strokeLinejoin="round" />
       <line x1="21" y1="12" x2="9" y2="12" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CollapseToggleIcon({ collapsed, size = 14 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {collapsed ? (
+        // Expand icon: chevron pointing right >
+        <polyline points="9 18 15 12 9 6" />
+      ) : (
+        // Collapse icon: chevron pointing left <
+        <polyline points="15 18 9 12 15 6" />
+      )}
     </svg>
   );
 }
