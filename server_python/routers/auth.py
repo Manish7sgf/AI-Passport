@@ -161,18 +161,43 @@ def github_callback(code: str | None = None):
         primary = next((e for e in emails if e.get("primary") and e.get("verified")), None)
         email = primary["email"] if primary else f"{profile['login']}@github.local"
 
-    # Upsert user
-    user = execute(
-        """INSERT INTO users (email, name, github_username, github_token, avatar_url)
-           VALUES (%s, %s, %s, %s, %s)
-           ON CONFLICT (email) DO UPDATE SET
-             github_username = EXCLUDED.github_username,
-             github_token    = EXCLUDED.github_token,
-             avatar_url      = EXCLUDED.avatar_url,
-             name            = EXCLUDED.name
-           RETURNING id, email, name, github_username, avatar_url""",
-        (email, profile.get("name") or profile["login"], profile["login"], access_token, profile.get("avatar_url")),
+    # Find existing user by github_username OR email to always preserve user data
+    existing_user = fetch_one(
+        "SELECT id, email, name, github_username FROM users WHERE github_username = %s OR email = %s",
+        (profile["login"], email),
     )
+
+    if existing_user:
+        user = execute(
+            """UPDATE users SET
+                 github_username = %s,
+                 github_token = %s,
+                 avatar_url = %s,
+                 name = COALESCE(NULLIF(%s, ''), name)
+               WHERE id = %s
+               RETURNING id, email, name, github_username, avatar_url""",
+            (
+                profile["login"],
+                access_token,
+                profile.get("avatar_url"),
+                profile.get("name") or profile["login"],
+                str(existing_user["id"]),
+            ),
+        )
+    else:
+        user = execute(
+            """INSERT INTO users (email, name, github_username, github_token, avatar_url)
+               VALUES (%s, %s, %s, %s, %s)
+               RETURNING id, email, name, github_username, avatar_url""",
+            (
+                email,
+                profile.get("name") or profile["login"],
+                profile["login"],
+                access_token,
+                profile.get("avatar_url"),
+            ),
+        )
+
     if not user:
         return RedirectResponse(f"{frontend}/auth?error=db_error")
 
@@ -206,9 +231,15 @@ def github_callback(code: str | None = None):
 
         detected_skills = github_service.extract_skills_from_repos(synced_repos)
         if detected_skills:
+            # Merge with existing skills in passport
+            existing_p = fetch_one("SELECT skills FROM passports WHERE user_id = %s", (str(user["id"]),))
+            cur_skills = existing_p.get("skills") or [] if existing_p else []
+            if isinstance(cur_skills, str):
+                cur_skills = json.loads(cur_skills)
+            merged = list(dict.fromkeys(cur_skills + [s for s in detected_skills if s not in cur_skills]))
             execute(
                 "UPDATE passports SET skills = %s, last_updated = NOW() WHERE user_id = %s",
-                (json.dumps(detected_skills), str(user["id"])),
+                (json.dumps(merged), str(user["id"])),
             )
 
         calculate_score(str(user["id"]))
