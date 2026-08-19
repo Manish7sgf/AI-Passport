@@ -93,7 +93,20 @@ app.include_router(public.router)
 
 # ── Utility endpoints ─────────────────────────────────────────────────────────
 
+@app.get("/")
+@app.head("/")
+def root():
+    return {
+        "success": True,
+        "name": "AI Future Passport API",
+        "version": "2.0.0",
+        "docs": "/api/docs",
+        "health": "/api/health",
+    }
+
+
 @app.get("/api/health")
+@app.head("/api/health")
 def health():
     return {"success": True, "data": {"status": "ok", "timestamp": datetime.utcnow().isoformat()}}
 
