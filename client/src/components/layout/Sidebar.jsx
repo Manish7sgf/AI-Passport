@@ -41,8 +41,8 @@ export default function Sidebar({
     <aside
       style={{
         width: collapsed ? "var(--sidebar-collapsed-width)" : "var(--sidebar-width)",
-        minHeight: "100vh",
-        height: "100vh",
+        height: "100dvh",
+        maxHeight: "100dvh",
         background: "var(--bg)",
         borderRight: "0.5px solid var(--border)",
         display: "flex",
@@ -198,9 +198,10 @@ export default function Sidebar({
       {/* User Info Header */}
       <div
         style={{
-          padding: collapsed ? "16px 8px" : "16px 18px",
+          padding: collapsed ? "14px 8px" : "14px 16px",
           borderBottom: "0.5px solid var(--border)",
-          transition: "padding 0.25s ease"
+          transition: "padding 0.25s ease",
+          flexShrink: 0
         }}
       >
         <div
@@ -277,7 +278,16 @@ export default function Sidebar({
       </div>
 
       {/* Nav List */}
-      <nav style={{ flex: 1, padding: "12px 0", overflowY: "auto", overflowX: "hidden" }}>
+      <nav
+        style={{
+          flex: 1,
+          minHeight: 0,
+          padding: "8px 0",
+          overflowY: "auto",
+          overflowX: "hidden",
+          WebkitOverflowScrolling: "touch"
+        }}
+      >
         {navItems.map(({ to, label, icon: Icon }) => (
           <div key={to} style={{ position: "relative" }} className={collapsed ? "sidebar-item-collapsed" : ""}>
             <NavLink
@@ -288,7 +298,7 @@ export default function Sidebar({
                 alignItems: "center",
                 gap: collapsed ? "0" : "12px",
                 justifyContent: collapsed ? "center" : "flex-start",
-                padding: collapsed ? "12px 0" : "11px 18px",
+                padding: collapsed ? "12px 0" : "10px 16px",
                 fontSize: "13px",
                 color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
                 background: isActive ? "var(--bg-secondary)" : "transparent",
@@ -315,9 +325,12 @@ export default function Sidebar({
       {/* Bottom section: Score & Sign Out */}
       <div
         style={{
-          padding: collapsed ? "14px 8px" : "16px 18px",
+          padding: collapsed ? "12px 8px" : "14px 16px",
+          paddingBottom: "max(16px, env(safe-area-inset-bottom))",
           borderTop: "0.5px solid var(--border)",
-          background: "var(--bg)"
+          background: "var(--bg)",
+          flexShrink: 0,
+          marginTop: "auto"
         }}
       >
         {!collapsed ? (

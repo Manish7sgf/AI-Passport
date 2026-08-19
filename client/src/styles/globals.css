@@ -263,8 +263,12 @@ input, textarea {
 @media (max-width: 768px) {
   .app-sidebar {
     transform: translateX(-100%) !important;
-    width: min(300px, 85vw) !important;
+    width: min(290px, 82vw) !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
     box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+    display: flex !important;
+    flex-direction: column !important;
   }
   .app-sidebar.sidebar-mobile-open {
     transform: translateX(0) !important;
