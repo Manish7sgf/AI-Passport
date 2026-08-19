@@ -33,19 +33,22 @@ def calculate_score(user_id: str) -> dict:
         "SELECT COUNT(*)::int AS count FROM verified_activities WHERE user_id = %s AND activity_type = 'hackathon'",
         (user_id,),
     )
-    hack_count = (hack_row["count"] if hack_row else 0) + (passport.get("hackathons") or 0)
+    hack_act_count = hack_row["count"] if hack_row else 0
+    hack_count = hack_act_count if hack_act_count > 0 else (passport.get("hackathons") or 0)
 
     pr_row = fetch_one(
         "SELECT COUNT(*)::int AS count FROM verified_activities WHERE user_id = %s AND activity_type = 'open_source_pr'",
         (user_id,),
     )
-    pr_count = (pr_row["count"] if pr_row else 0) + (passport.get("open_source_prs") or 0)
+    pr_act_count = pr_row["count"] if pr_row else 0
+    pr_count = pr_act_count if pr_act_count > 0 else (passport.get("open_source_prs") or 0)
 
     mentor_row = fetch_one(
         "SELECT COUNT(*)::int AS count FROM verified_activities WHERE user_id = %s AND activity_type = 'mentoring'",
         (user_id,),
     )
-    mentor_count = (mentor_row["count"] if mentor_row else 0) + (passport.get("mentoring_sessions") or 0)
+    mentor_act_count = mentor_row["count"] if mentor_row else 0
+    mentor_count = mentor_act_count if mentor_act_count > 0 else (passport.get("mentoring_sessions") or 0)
 
     projects_score    = min(portfolio_count * 10, 30)
     skills_score      = min(len(skills) * 2, 20)

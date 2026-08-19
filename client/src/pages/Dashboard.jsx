@@ -31,6 +31,7 @@ export default function Dashboard() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("hackathon");
+  const [viewingCert, setViewingCert] = useState(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -158,6 +159,7 @@ export default function Dashboard() {
             items={hackathons}
             onAdd={() => handleOpenModal("hackathon")}
             onRemove={handleRemoveActivity}
+            onViewCert={setViewingCert}
             emptyText="No verified hackathons logged yet."
           />
 
@@ -169,6 +171,7 @@ export default function Dashboard() {
             items={openSourcePrs}
             onAdd={() => handleOpenModal("open_source_pr")}
             onRemove={handleRemoveActivity}
+            onViewCert={setViewingCert}
             emptyText="No open source PRs verified yet."
           />
 
@@ -180,6 +183,7 @@ export default function Dashboard() {
             items={mentoring}
             onAdd={() => handleOpenModal("mentoring")}
             onRemove={handleRemoveActivity}
+            onViewCert={setViewingCert}
             emptyText="No leadership sessions verified yet."
           />
         </div>
@@ -241,11 +245,80 @@ export default function Dashboard() {
         onClose={() => setModalOpen(false)}
         onAdd={handleAddActivity}
       />
+
+      {/* Certificate Photo Lightbox Modal */}
+      {viewingCert && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.85)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 200,
+            padding: "20px"
+          }}
+          onClick={() => setViewingCert(null)}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: "680px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              padding: "20px",
+              background: "var(--bg)",
+              borderRadius: "var(--radius)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "14px",
+              border: "0.5px solid var(--border)"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3 style={{ fontFamily: "var(--font)", fontSize: "16px", fontWeight: "600" }}>
+                  {viewingCert.title}
+                </h3>
+                <p style={{ fontSize: "12px", color: "var(--accent)", marginTop: "2px" }}>
+                  {viewingCert.details?.role_or_award} {viewingCert.details?.year_or_date && `· ${viewingCert.details.year_or_date}`}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingCert(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "18px", color: "var(--text-tertiary)", padding: "4px" }}
+              >
+                ✕
+              </button>
+            </div>
+            {viewingCert.image ? (
+              <img
+                src={viewingCert.image}
+                alt={viewingCert.title}
+                style={{ width: "100%", borderRadius: "var(--radius)", border: "0.5px solid var(--border)", objectFit: "contain", maxHeight: "65vh" }}
+              />
+            ) : (
+              <div style={{ padding: "30px", textAlign: "center", background: "var(--bg-secondary)", borderRadius: "var(--radius)" }}>
+                <p style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
+                  Certificate link: <a href={viewingCert.proof_url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", textDecoration: "underline" }}>{viewingCert.proof_url}</a>
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function ActivityCategoryCard({ title, icon, count, items = [], onAdd, onRemove, emptyText }) {
+function ActivityCategoryCard({ title, icon, count, items = [], onAdd, onRemove, onViewCert, emptyText }) {
   return (
     <div
       style={{
@@ -280,9 +353,10 @@ function ActivityCategoryCard({ title, icon, count, items = [], onAdd, onRemove,
       </div>
 
       {items.length > 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "150px", overflowY: "auto" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "160px", overflowY: "auto" }}>
           {items.map((item) => {
             const details = typeof item.details === "string" ? JSON.parse(item.details || "{}") : item.details || {};
+            const hasImage = details.certificate_image || item.proof_url?.startsWith("data:image");
             return (
               <div
                 key={item.id}
@@ -303,19 +377,42 @@ function ActivityCategoryCard({ title, icon, count, items = [], onAdd, onRemove,
                   </div>
                   {details.role_or_award && (
                     <div style={{ fontSize: "10px", color: "var(--accent)", marginTop: "2px", fontWeight: "500" }}>
-                      {details.role_or_award}
+                      {details.role_or_award} {details.year_or_date && `· ${details.year_or_date}`}
                     </div>
                   )}
-                  {item.proof_url && (
-                    <a
-                      href={item.proof_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ fontSize: "10px", color: "var(--text-tertiary)", textDecoration: "underline", marginTop: "2px", display: "inline-block" }}
-                    >
-                      View Proof ↗
-                    </a>
-                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px", flexWrap: "wrap" }}>
+                    {hasImage && (
+                      <button
+                        type="button"
+                        onClick={() => onViewCert({ title: item.title, image: details.certificate_image || item.proof_url, details })}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          background: "rgba(16, 185, 129, 0.12)",
+                          border: "0.5px solid var(--accent)",
+                          borderRadius: "4px",
+                          padding: "2px 6px",
+                          fontSize: "10px",
+                          color: "var(--accent)",
+                          cursor: "pointer",
+                          fontFamily: "var(--font)"
+                        }}
+                      >
+                        📜 Certificate Photo
+                      </button>
+                    )}
+                    {item.proof_url && !item.proof_url.startsWith("data:") && (
+                      <a
+                        href={item.proof_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: "10px", color: "var(--text-tertiary)", textDecoration: "underline" }}
+                      >
+                        View Proof ↗
+                      </a>
+                    )}
+                  </div>
                 </div>
                 <button
                   type="button"

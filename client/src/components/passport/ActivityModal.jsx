@@ -19,11 +19,29 @@ export default function ActivityModal({ isOpen, onClose, onAdd, defaultType = "h
   const [organization, setOrganization] = useState("");
   const [yearOrDate, setYearOrDate] = useState("");
   const [description, setDescription] = useState("");
+  const [certificateImage, setCertificateImage] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   if (!isOpen) return null;
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      setError("Certificate image must be under 3MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCertificateImage(reader.result);
+      setError("");
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,16 +68,18 @@ export default function ActivityModal({ isOpen, onClose, onAdd, defaultType = "h
       await onAdd({
         activity_type: activeType,
         title: title.trim(),
-        proof_url: proofUrl.trim(),
+        proof_url: proofUrl.trim() || certificateImage || "",
         role_or_award: roleOrAward.trim(),
         organization: organization.trim(),
         year_or_date: yearOrDate.trim(),
-        description: description.trim()
+        description: description.trim(),
+        certificate_image: certificateImage || ""
       });
 
       // Reset form on success
       setTitle("");
       setProofUrl("");
+      setCertificateImage("");
       setRoleOrAward("");
       setOrganization("");
       setYearOrDate("");
@@ -190,6 +210,79 @@ export default function ActivityModal({ isOpen, onClose, onAdd, defaultType = "h
               required={activeType === "open_source_pr"}
             />
           </div>
+
+          {activeType === "hackathon" && (
+            <div>
+              <label style={{ display: "block", fontSize: "11px", fontFamily: "var(--font)", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>
+                Attach Certificate Photo / Image (Optional)
+              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <label
+                  style={{
+                    padding: "6px 12px",
+                    background: "var(--bg-secondary)",
+                    border: "0.5px dashed var(--border)",
+                    borderRadius: "var(--radius)",
+                    fontSize: "12px",
+                    color: "var(--text-secondary)",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px"
+                  }}
+                >
+                  <span>📷 Choose Certificate Image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: "none" }}
+                  />
+                </label>
+                {certificateImage && (
+                  <span style={{ fontSize: "11px", color: "var(--green)" }}>
+                    ✓ Image attached
+                  </span>
+                )}
+              </div>
+              {certificateImage && (
+                <div style={{ marginTop: "8px", position: "relative", width: "fit-content" }}>
+                  <img
+                    src={certificateImage}
+                    alt="Certificate Preview"
+                    style={{
+                      maxHeight: "90px",
+                      borderRadius: "var(--radius)",
+                      border: "0.5px solid var(--border)",
+                      objectFit: "cover"
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCertificateImage("")}
+                    style={{
+                      position: "absolute",
+                      top: "-6px",
+                      right: "-6px",
+                      background: "var(--red)",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "50%",
+                      width: "18px",
+                      height: "18px",
+                      cursor: "pointer",
+                      fontSize: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
             <div>
