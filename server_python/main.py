@@ -56,6 +56,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Rewrite middleware (supports requests with or without /api prefix) ───────
+
+@app.middleware("http")
+async def ensure_api_prefix(request: Request, call_next):
+    path = request.url.path
+    api_prefixes = ("/auth", "/passport", "/portfolio", "/radar", "/timemachine", "/score", "/github", "/public")
+    if any(path.startswith(p) for p in api_prefixes) and not path.startswith("/api"):
+        request.scope["path"] = f"/api{path}"
+    return await call_next(request)
+
+
 # ── Global error handler ─────────────────────────────────────────────────────
 
 @app.exception_handler(Exception)
@@ -109,12 +120,15 @@ def root():
     }
 
 
+@app.get("/health")
 @app.get("/api/health")
+@app.head("/health")
 @app.head("/api/health")
 def health():
     return {"success": True, "data": {"status": "ok", "timestamp": datetime.utcnow().isoformat()}}
 
 
+@app.get("/ping")
 @app.get("/api/ping")
 def ping():
     return "pong"
