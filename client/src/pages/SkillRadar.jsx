@@ -20,7 +20,9 @@ export default function SkillRadarPage() {
   useEffect(() => {
     const init = async () => {
       await loadLatest();
-      if (passport?.skills?.length > 0) setSkills(passport.skills);
+      if (passport?.skills?.length > 0 && skills.length === 0) {
+        setSkills(passport.skills);
+      }
     };
     init();
   }, [passport?.skills]);
@@ -35,6 +37,7 @@ export default function SkillRadarPage() {
 
   const addSkill = (e) => {
     if (e.key === "Enter" && skillInput.trim()) {
+      e.preventDefault();
       const s = skillInput.trim();
       if (!skills.includes(s)) setSkills([...skills, s]);
       setSkillInput("");
@@ -56,8 +59,8 @@ export default function SkillRadarPage() {
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Input card */}
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
-          <span className="section-label">Analyse Skill Gap</span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px", flexWrap: "wrap", gap: "10px" }}>
+          <span className="section-label">2030 Skill Gap Radar Analysis</span>
           {passport?.skills?.length > 0 && (
             <Button variant="secondary" size="small" onClick={importFromPassport}>
               Import from passport
@@ -65,26 +68,28 @@ export default function SkillRadarPage() {
           )}
         </div>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
           {skills.map((s) => (
             <span
               key={s}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "5px",
+                gap: "6px",
                 padding: "4px 8px",
                 background: "var(--bg-secondary)",
                 border: "0.5px solid var(--border)",
                 borderRadius: "4px",
                 fontSize: "12px",
-                color: "var(--text-secondary)"
+                color: "var(--text-primary)"
               }}
             >
               {s}
               <button
+                type="button"
                 onClick={() => removeSkill(s)}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", lineHeight: 1, padding: 0 }}
+                aria-label={`Remove ${s}`}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", lineHeight: 1, padding: 0, fontSize: "14px" }}
               >
                 ×
               </button>
@@ -96,7 +101,7 @@ export default function SkillRadarPage() {
           value={skillInput}
           onChange={(e) => setSkillInput(e.target.value)}
           onKeyDown={addSkill}
-          placeholder="Type a skill and press Enter to add"
+          placeholder="Type a skill (e.g. Python, Docker, AI Agents) and press Enter"
           style={{
             width: "100%",
             padding: "8px 12px",
@@ -113,7 +118,7 @@ export default function SkillRadarPage() {
 
         {skills.length === 0 && (
           <p style={{ fontSize: "12px", color: "var(--red)", marginBottom: "8px" }}>
-            Please add at least one skill
+            Please add at least one skill to analyse.
           </p>
         )}
 
@@ -121,10 +126,10 @@ export default function SkillRadarPage() {
           {isLoading ? (
             <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <Spinner size={16} color="var(--accent-text)" />
-              Analysing gap...
+              Analysing 2030 skill gaps with AI...
             </span>
           ) : (
-            "Analyse gap →"
+            "Analyse 2030 skill gap →"
           )}
         </Button>
       </div>

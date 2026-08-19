@@ -28,43 +28,54 @@ export default function PublicPassport() {
   const interests = Array.isArray(passport?.interests) ? passport.interests : [];
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", padding: "40px 20px" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", padding: "32px 16px" }}>
       <div style={{ maxWidth: "720px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
 
         {/* Header */}
-        <div className="card" style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          {user.avatar_url ? (
-            <img src={user.avatar_url} alt={user.name}
-              style={{ width: 64, height: 64, borderRadius: "50%", border: "0.5px solid var(--border)" }} />
-          ) : (
-            <div style={{
-              width: 64, height: 64, borderRadius: "50%",
-              background: "var(--bg-secondary)", border: "0.5px solid var(--border)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: "var(--font)", fontSize: "20px", color: "var(--text-secondary)"
-            }}>
-              {getInitials(user.name)}
+        <div
+          className="card"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "20px"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", flex: "1 1 240px" }}>
+            {user.avatar_url ? (
+              <img src={user.avatar_url} alt={user.name}
+                style={{ width: 64, height: 64, borderRadius: "50%", border: "0.5px solid var(--border)", objectFit: "cover", flexShrink: 0 }} />
+            ) : (
+              <div style={{
+                width: 64, height: 64, borderRadius: "50%",
+                background: "var(--bg-secondary)", border: "0.5px solid var(--border)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "var(--font)", fontSize: "20px", color: "var(--text-secondary)", flexShrink: 0
+              }}>
+                {getInitials(user.name)}
+              </div>
+            )}
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h1 style={{ fontFamily: "var(--font)", fontSize: "20px", fontWeight: "600", marginBottom: "4px" }}>
+                {user.name}
+              </h1>
+              {user.github_username && (
+                <a href={`https://github.com/${user.github_username}`} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: "12px", color: "var(--text-tertiary)", textDecoration: "underline" }}>
+                  @{user.github_username}
+                </a>
+              )}
+              {passport?.bio && (
+                <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginTop: "8px", lineHeight: "1.5" }}>
+                  {passport.bio}
+                </p>
+              )}
             </div>
-          )}
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontFamily: "var(--font)", fontSize: "20px", fontWeight: "500", marginBottom: "4px" }}>
-              {user.name}
-            </h1>
-            {user.github_username && (
-              <a href={`https://github.com/${user.github_username}`} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: "12px", color: "var(--text-tertiary)", textDecoration: "underline" }}>
-                @{user.github_username}
-              </a>
-            )}
-            {passport?.bio && (
-              <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginTop: "8px", lineHeight: "1.5" }}>
-                {passport.bio}
-              </p>
-            )}
           </div>
-          <div style={{ textAlign: "center" }}>
+          <div style={{ textAlign: "center", margin: "0 auto" }}>
             <ScoreRing score={score} size={80} />
-            <div style={{ fontSize: "11px", color: getScoreColor(score), marginTop: "4px", fontFamily: "var(--font)" }}>
+            <div style={{ fontSize: "11px", color: getScoreColor(score), marginTop: "4px", fontFamily: "var(--font)", fontWeight: "500" }}>
               {getScoreLabel(score)}
             </div>
           </div>

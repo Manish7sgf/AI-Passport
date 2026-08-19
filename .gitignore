@@ -35,5 +35,17 @@ Thumbs.db
 .vscode/settings.json
 .idea/
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
 # Coverage
 coverage/
+

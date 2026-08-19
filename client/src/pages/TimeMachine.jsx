@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import useUserStore from "../store/userStore";
 import useAuthStore from "../store/authStore";
 import { useTimeMachine } from "../hooks/useAI";
@@ -17,8 +17,19 @@ export default function TimeMachine() {
   const [skillInput, setSkillInput] = useState("");
   const [interestInput, setInterestInput] = useState("");
 
+  // Sync skills/interests from passport if state is empty and passport arrives
+  useEffect(() => {
+    if (passport?.skills?.length && skills.length === 0) {
+      setSkills(passport.skills);
+    }
+    if (passport?.interests?.length && interests.length === 0) {
+      setInterests(passport.interests);
+    }
+  }, [passport]);
+
   const addSkill = (e) => {
     if (e.key === "Enter" && skillInput.trim()) {
+      e.preventDefault();
       const s = skillInput.trim();
       if (!skills.includes(s)) setSkills([...skills, s]);
       setSkillInput("");
@@ -27,6 +38,7 @@ export default function TimeMachine() {
 
   const addInterest = (e) => {
     if (e.key === "Enter" && interestInput.trim()) {
+      e.preventDefault();
       const i = interestInput.trim();
       if (!interests.includes(i)) setInterests([...interests, i]);
       setInterestInput("");
@@ -38,19 +50,31 @@ export default function TimeMachine() {
     await predict({ skills, interests });
   };
 
+  const importFromPassport = () => {
+    if (passport?.skills) setSkills([...passport.skills]);
+    if (passport?.interests) setInterests([...passport.interests]);
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Input card */}
       <div className="card">
-        <span className="section-label" style={{ display: "block", marginBottom: "20px" }}>
-          Simulate Your Career
-        </span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px", flexWrap: "wrap", gap: "10px" }}>
+          <span className="section-label">
+            Simulate Your AI-Era Career (2025–2040)
+          </span>
+          {passport?.skills?.length > 0 && (
+            <Button variant="secondary" size="small" onClick={importFromPassport}>
+              Import from passport
+            </Button>
+          )}
+        </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {/* Skills input */}
           <div>
             <label className="section-label" style={{ display: "block", marginBottom: "8px" }}>
-              Current Skills (press Enter to add)
+              Current Skills (type and press Enter)
             </label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
               {skills.map((s) => (
@@ -61,14 +85,14 @@ export default function TimeMachine() {
               value={skillInput}
               onChange={setSkillInput}
               onKeyDown={addSkill}
-              placeholder="Type a skill and press Enter"
+              placeholder="e.g. Python, PyTorch, React, SQL"
             />
           </div>
 
           {/* Interests input */}
           <div>
             <label className="section-label" style={{ display: "block", marginBottom: "8px" }}>
-              Interests (press Enter to add)
+              Career Interests & Domains (type and press Enter)
             </label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
               {interests.map((i) => (
@@ -84,13 +108,13 @@ export default function TimeMachine() {
               value={interestInput}
               onChange={setInterestInput}
               onKeyDown={addInterest}
-              placeholder="Type an interest and press Enter"
+              placeholder="e.g. Autonomous Agents, Healthcare AI, Robotics"
             />
           </div>
 
           {skills.length === 0 && (
             <p style={{ fontSize: "12px", color: "var(--red)" }}>
-              Please add at least one skill
+              Please add at least one skill to simulate career readiness.
             </p>
           )}
 
@@ -98,10 +122,10 @@ export default function TimeMachine() {
             {isLoading ? (
               <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <Spinner size={16} color="var(--accent-text)" />
-                Simulating your 2030 career path...
+                Simulating your 2025–2040 career trajectory...
               </span>
             ) : (
-              "Simulate my future →"
+              "Simulate future careers →"
             )}
           </Button>
         </div>
@@ -137,9 +161,9 @@ export default function TimeMachine() {
 
           <div>
             <span className="section-label" style={{ display: "block", marginBottom: "16px" }}>
-              Predicted Career Paths
+              Predicted Future Job Roles
             </span>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
+            <div className="grid-responsive-2">
               {(result.jobs || []).map((job, i) => (
                 <JobCard key={i} job={job} index={i} />
               ))}
@@ -157,7 +181,7 @@ function TagPill({ label, onRemove, variant = "skill" }) {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: "5px",
+        gap: "6px",
         padding: "4px 8px",
         background: variant === "interest" ? "var(--bg)" : "var(--bg-secondary)",
         border: "0.5px solid var(--border)",
@@ -168,7 +192,9 @@ function TagPill({ label, onRemove, variant = "skill" }) {
     >
       {label}
       <button
+        type="button"
         onClick={onRemove}
+        aria-label={`Remove ${label}`}
         style={{
           background: "none",
           border: "none",
@@ -216,7 +242,7 @@ function CareerSkeletons() {
         <div className="skeleton" style={{ height: "8px", width: "100%", marginBottom: "8px" }} />
         <div className="skeleton" style={{ height: "13px", width: "80%" }} />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
+      <div className="grid-responsive-2">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="card">
             <div className="skeleton" style={{ height: "14px", width: "70%", marginBottom: "12px" }} />

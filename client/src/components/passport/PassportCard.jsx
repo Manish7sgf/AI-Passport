@@ -4,9 +4,6 @@ import Button from "../ui/Button";
 
 export default function PassportCard({ passport, onUpdate, forceEdit = false, onEditDone }) {
   const [editing, setEditing] = useState(forceEdit);
-
-  // Sync if parent forces edit mode open
-  useEffect(() => { if (forceEdit) setEditing(true); }, [forceEdit]);
   const [bio, setBio] = useState(passport?.bio || "");
   const [skillInput, setSkillInput] = useState("");
   const [interestInput, setInterestInput] = useState("");
@@ -14,10 +11,23 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
   const [interests, setInterests] = useState(passport?.interests || []);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Sync state when parent forces edit or when async passport data loads
+  useEffect(() => {
+    if (forceEdit) setEditing(true);
+  }, [forceEdit]);
+
+  useEffect(() => {
+    if (!editing) {
+      setBio(passport?.bio || "");
+      setSkills(Array.isArray(passport?.skills) ? passport.skills : []);
+      setInterests(Array.isArray(passport?.interests) ? passport.interests : []);
+    }
+  }, [passport, editing]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onUpdate({ bio, skills, interests });
+      await onUpdate({ bio: bio.trim(), skills, interests });
       setEditing(false);
       if (onEditDone) onEditDone();
     } finally {
@@ -27,6 +37,7 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
 
   const addSkill = (e) => {
     if (e.key === "Enter" && skillInput.trim()) {
+      e.preventDefault();
       const s = skillInput.trim();
       if (!skills.includes(s)) setSkills([...skills, s]);
       setSkillInput("");
@@ -37,6 +48,7 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
 
   const addInterest = (e) => {
     if (e.key === "Enter" && interestInput.trim()) {
+      e.preventDefault();
       const i = interestInput.trim();
       if (!interests.includes(i)) setInterests([...interests, i]);
       setInterestInput("");
@@ -45,17 +57,19 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
 
   const removeInterest = (i) => setInterests(interests.filter((x) => x !== i));
 
+  const hasData = !!passport?.bio || (passport?.skills?.length || 0) > 0 || (passport?.interests?.length || 0) > 0;
+
   return (
     <div className="card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
-        <span className="section-label">Your Passport</span>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+        <span className="section-label">Your Passport Profile</span>
         {!editing ? (
           <Button variant="secondary" size="small" onClick={() => setEditing(true)}>
-            Edit
+            Edit Profile
           </Button>
         ) : (
           <div style={{ display: "flex", gap: "8px" }}>
-            <Button variant="ghost" size="small" onClick={() => setEditing(false)}>
+            <Button variant="ghost" size="small" onClick={() => setEditing(false)} disabled={isSaving}>
               Cancel
             </Button>
             <Button size="small" onClick={handleSave} disabled={isSaving}>
@@ -69,12 +83,14 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {/* Bio */}
           <div>
-            <label className="section-label" style={{ display: "block", marginBottom: "6px" }}>Bio</label>
+            <label className="section-label" style={{ display: "block", marginBottom: "6px" }}>
+              Bio
+            </label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={3}
-              placeholder="A brief bio about yourself..."
+              placeholder="Tell employers and collaborators what you're working on and passionate about..."
               style={{
                 width: "100%",
                 padding: "10px 14px",
@@ -85,7 +101,8 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
                 fontSize: "14px",
                 color: "var(--text-primary)",
                 resize: "vertical",
-                outline: "none"
+                outline: "none",
+                lineHeight: "1.5"
               }}
             />
           </div>
@@ -93,7 +110,7 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
           {/* Skills */}
           <div>
             <label className="section-label" style={{ display: "block", marginBottom: "6px" }}>
-              Skills (press Enter to add)
+              Skills (type and press Enter)
             </label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
               {skills.map((s) => (
@@ -102,17 +119,32 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "5px",
+                    gap: "6px",
                     padding: "4px 8px",
                     background: "var(--bg-secondary)",
                     border: "0.5px solid var(--border)",
                     borderRadius: "4px",
                     fontSize: "12px",
-                    color: "var(--text-secondary)"
+                    color: "var(--text-primary)"
                   }}
                 >
                   {s}
-                  <button onClick={() => removeSkill(s)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", lineHeight: 1, padding: 0 }}>×</button>
+                  <button
+                    type="button"
+                    onClick={() => removeSkill(s)}
+                    aria-label={`Remove ${s}`}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "var(--text-tertiary)",
+                      lineHeight: 1,
+                      padding: 0,
+                      fontSize: "14px"
+                    }}
+                  >
+                    ×
+                  </button>
                 </span>
               ))}
             </div>
@@ -120,7 +152,7 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
               value={skillInput}
               onChange={(e) => setSkillInput(e.target.value)}
               onKeyDown={addSkill}
-              placeholder="Type a skill and press Enter"
+              placeholder="e.g. React, Python, PostgreSQL, Docker"
               style={{
                 width: "100%",
                 padding: "8px 12px",
@@ -138,7 +170,7 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
           {/* Interests */}
           <div>
             <label className="section-label" style={{ display: "block", marginBottom: "6px" }}>
-              Interests (press Enter to add)
+              Interests & Domains (type and press Enter)
             </label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
               {interests.map((i) => (
@@ -147,7 +179,7 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "5px",
+                    gap: "6px",
                     padding: "4px 8px",
                     background: "var(--bg)",
                     border: "0.5px solid var(--border)",
@@ -157,7 +189,22 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
                   }}
                 >
                   {i}
-                  <button onClick={() => removeInterest(i)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", lineHeight: 1, padding: 0 }}>×</button>
+                  <button
+                    type="button"
+                    onClick={() => removeInterest(i)}
+                    aria-label={`Remove ${i}`}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "var(--text-tertiary)",
+                      lineHeight: 1,
+                      padding: 0,
+                      fontSize: "14px"
+                    }}
+                  >
+                    ×
+                  </button>
                 </span>
               ))}
             </div>
@@ -165,7 +212,7 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
               value={interestInput}
               onChange={(e) => setInterestInput(e.target.value)}
               onKeyDown={addInterest}
-              placeholder="Type an interest and press Enter"
+              placeholder="e.g. AI Agents, Full-Stack, Open Source, Distributed Systems"
               style={{
                 width: "100%",
                 padding: "8px 12px",
@@ -182,11 +229,15 @@ export default function PassportCard({ passport, onUpdate, forceEdit = false, on
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {passport?.bio && (
+          {passport?.bio ? (
             <p style={{ fontSize: "14px", color: "var(--text-secondary)", lineHeight: "1.6" }}>
               {passport.bio}
             </p>
-          )}
+          ) : !hasData ? (
+            <div style={{ padding: "16px 0", color: "var(--text-tertiary)", fontSize: "13px" }}>
+              No bio or skills added yet. Click &ldquo;Edit Profile&rdquo; to complete your passport.
+            </div>
+          ) : null}
           <BadgeGrid skills={passport?.skills || []} interests={passport?.interests || []} />
         </div>
       )}

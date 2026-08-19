@@ -43,11 +43,14 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS — mirrors the JS server behaviour
-CLIENT_URL = os.getenv("CLIENT_URL", "http://localhost:5173")
+# CORS — mirrors the JS server behaviour + handles Vercel deployments
+CLIENT_URL = os.getenv("CLIENT_URL", "http://localhost:5173").rstrip("/")
+allowed_origins = list({CLIENT_URL, f"{CLIENT_URL}/", "http://localhost:5173", "http://127.0.0.1:5173"})
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[CLIENT_URL, "http://localhost:5173"],
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

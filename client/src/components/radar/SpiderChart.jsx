@@ -43,7 +43,16 @@ export default function SpiderChart({ current = [], future = [], size = 300 }) {
     : null;
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <svg
+      viewBox={`0 0 ${size} ${size}`}
+      style={{
+        width: "100%",
+        maxWidth: `${size}px`,
+        height: "auto",
+        display: "block",
+        margin: "0 auto"
+      }}
+    >
       {/* Grid rings */}
       {rings.map((d, i) => (
         <path key={i} d={d} fill="none" stroke="var(--border)" strokeWidth="0.5" />

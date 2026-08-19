@@ -48,26 +48,33 @@ export default function Portfolio() {
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
 
       {/* Top action row */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {/* GitHub sync card */}
         <div
           className="card"
-          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "14px",
+            padding: "16px 20px"
+          }}
         >
-          <div>
+          <div style={{ flex: "1 1 240px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
               <GitHubIcon />
               <span style={{ fontFamily: "var(--font)", fontSize: "13px", fontWeight: "500" }}>
-                GitHub Sync
+                GitHub Repository Auto-Sync
               </span>
             </div>
             {hasGitHub ? (
               <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-                @{user.github_username} · {synced.length} repos synced
+                Linked account: @{user.github_username} · {synced.length} repos synced
               </p>
             ) : (
               <p style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
-                Connect GitHub via OAuth to auto-sync repos
+                Sign in with GitHub OAuth to automatically import public repositories
               </p>
             )}
             {syncResult && (
@@ -139,7 +146,7 @@ export default function Portfolio() {
       {/* GitHub-synced projects */}
       {synced.length > 0 && (
         <Section
-          label="GitHub Synced"
+          label="GitHub Synced Repositories"
           count={synced.length}
           items={synced}
           onRemove={handleRemove}
@@ -150,17 +157,19 @@ export default function Portfolio() {
       {/* Empty state */}
       {portfolio.length === 0 && !isLoading && !result && (
         <div style={{
-          padding: "40px",
+          padding: "40px 20px",
           textAlign: "center",
           color: "var(--text-tertiary)",
           border: "0.5px dashed var(--border)",
           borderRadius: "var(--radius-lg)"
         }}>
-          <p style={{ fontFamily: "var(--font)", fontSize: "13px" }}>No projects yet</p>
-          <p style={{ fontSize: "12px", marginTop: "4px" }}>
+          <p style={{ fontFamily: "var(--font)", fontSize: "14px", fontWeight: "500", color: "var(--text-secondary)" }}>
+            No projects in portfolio yet
+          </p>
+          <p style={{ fontSize: "13px", marginTop: "6px", maxWidth: "440px", margin: "6px auto 0" }}>
             {hasGitHub
-              ? 'Click "Sync repos" to import your GitHub projects, or paste a URL below to AI-verify one.'
-              : "Paste a GitHub repo URL above to verify your first project."}
+              ? 'Click "Sync repos" to import your GitHub projects, or paste a repository URL above to generate an AI evaluation.'
+              : "Paste a public GitHub repository URL above to verify your project."}
           </p>
         </div>
       )}
@@ -182,7 +191,7 @@ function Section({ label, count, items, onRemove, badge }) {
           {count} project{count !== 1 ? "s" : ""}
         </span>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
+      <div className="grid-responsive-2">
         {items.map((item) => (
           <PortfolioCard key={item.id} item={item} onRemove={onRemove} />
         ))}

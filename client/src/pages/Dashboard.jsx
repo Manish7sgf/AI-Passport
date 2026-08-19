@@ -61,32 +61,32 @@ export default function Dashboard() {
       />
 
       {/* Top stat cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
-        <div className="card" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+      <div className="grid-responsive-3">
+        <div className="card" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", textAlign: "center" }}>
           <span className="section-label">Employability Score</span>
           <ScoreRing score={score} size={100} />
-          <span style={{ fontSize: "12px", color: getScoreColor(score), fontFamily: "var(--font)" }}>
+          <span style={{ fontSize: "12px", color: getScoreColor(score), fontFamily: "var(--font)", fontWeight: "500" }}>
             {getScoreLabel(score)}
           </span>
         </div>
 
         <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <span className="section-label" style={{ marginBottom: "12px" }}>Projects</span>
-          <div style={{ fontFamily: "var(--font)", fontSize: "40px", fontWeight: "500", lineHeight: 1 }}>
+          <span className="section-label" style={{ marginBottom: "10px" }}>Projects</span>
+          <div style={{ fontFamily: "var(--font)", fontSize: "36px", fontWeight: "500", lineHeight: 1 }}>
             {portfolio.length}
           </div>
-          <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-            {portfolio.filter((p) => p.verified).length} AI verified
+          <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "6px" }}>
+            {portfolio.filter((p) => p.verified).length} AI-verified
           </div>
         </div>
 
         <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <span className="section-label" style={{ marginBottom: "12px" }}>Skills</span>
-          <div style={{ fontFamily: "var(--font)", fontSize: "40px", fontWeight: "500", lineHeight: 1 }}>
+          <span className="section-label" style={{ marginBottom: "10px" }}>Skills Count</span>
+          <div style={{ fontFamily: "var(--font)", fontSize: "36px", fontWeight: "500", lineHeight: 1 }}>
             {skills.length}
           </div>
-          <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-            {skills.slice(0, 3).join(", ")}{skills.length > 3 ? "..." : ""}
+          <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "6px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {skills.length > 0 ? skills.slice(0, 3).join(", ") + (skills.length > 3 ? "..." : "") : "No skills logged"}
           </div>
         </div>
       </div>
@@ -101,10 +101,10 @@ export default function Dashboard() {
 
       {/* Activity counters */}
       <div className="card">
-        <span className="section-label" style={{ display: "block", marginBottom: "16px" }}>Activity</span>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
-          <StatCounter label="Hackathons"       value={passport?.hackathons ?? 0}        onUpdate={(v) => handleUpdatePassport({ hackathons: v })} />
-          <StatCounter label="Open Source PRs"  value={passport?.open_source_prs ?? 0}   onUpdate={(v) => handleUpdatePassport({ open_source_prs: v })} />
+        <span className="section-label" style={{ display: "block", marginBottom: "16px" }}>Activity Metrics</span>
+        <div className="grid-responsive-3">
+          <StatCounter label="Hackathons" value={passport?.hackathons ?? 0} onUpdate={(v) => handleUpdatePassport({ hackathons: v })} />
+          <StatCounter label="Open Source PRs" value={passport?.open_source_prs ?? 0} onUpdate={(v) => handleUpdatePassport({ open_source_prs: v })} />
           <StatCounter label="Mentoring Sessions" value={passport?.mentoring_sessions ?? 0} onUpdate={(v) => handleUpdatePassport({ mentoring_sessions: v })} />
         </div>
       </div>
@@ -118,18 +118,20 @@ export default function Dashboard() {
               { key: "projects",   label: "Projects verified", max: 30 },
               { key: "skills",     label: "Skills",            max: 20 },
               { key: "hackathons", label: "Hackathons",        max: 20 },
-              { key: "openSource", label: "Open source",       max: 15 },
-              { key: "mentoring",  label: "Mentoring",         max: 15 }
+              { key: "openSource", label: "Open source PRs",   max: 15 },
+              { key: "mentoring",  label: "Mentoring sessions", max: 15 }
             ].map(({ key, label, max }) => {
               const item      = breakdown[key] || {};
               const itemScore = item.score ?? 0;
               return (
                 <div key={key} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{ width: "140px", fontSize: "12px", color: "var(--text-secondary)", flexShrink: 0 }}>{label}</div>
+                  <div style={{ width: "130px", fontSize: "12px", color: "var(--text-secondary)", flexShrink: 0 }}>
+                    {label}
+                  </div>
                   <div style={{ flex: 1 }} className="progress-track">
                     <div className="progress-fill" style={{ width: `${toPercent(itemScore, max)}%` }} />
                   </div>
-                  <div style={{ width: "50px", textAlign: "right", fontFamily: "var(--font)", fontSize: "12px", flexShrink: 0 }}>
+                  <div style={{ width: "48px", textAlign: "right", fontFamily: "var(--font)", fontSize: "12px", flexShrink: 0 }}>
                     {itemScore}/{max}
                   </div>
                 </div>
@@ -145,7 +147,7 @@ export default function Dashboard() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span className="section-label">Recent Projects</span>
             <a href="/portfolio" style={{ fontSize: "12px", color: "var(--text-secondary)", textDecoration: "underline" }}>
-              View all →
+              View all ({portfolio.length}) →
             </a>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -161,20 +163,61 @@ export default function Dashboard() {
 
 function StatCounter({ label, value, onUpdate }) {
   return (
-    <div style={{ textAlign: "center" }}>
-      <div style={{ fontSize: "11px", color: "var(--text-tertiary)", fontFamily: "var(--font)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "8px" }}>
+    <div
+      style={{
+        textAlign: "center",
+        padding: "12px",
+        background: "var(--bg-secondary)",
+        borderRadius: "var(--radius)"
+      }}
+    >
+      <div style={{ fontSize: "10px", color: "var(--text-tertiary)", fontFamily: "var(--font)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>
         {label}
       </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
-        <button onClick={() => onUpdate(Math.max(0, value - 1))}
-          style={{ width: "24px", height: "24px", border: "0.5px solid var(--border)", borderRadius: "4px", background: "var(--bg-secondary)", cursor: "pointer", fontSize: "14px", color: "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px" }}>
+        <button
+          type="button"
+          onClick={() => onUpdate(Math.max(0, value - 1))}
+          aria-label={`Decrease ${label}`}
+          style={{
+            width: "32px",
+            height: "32px",
+            border: "0.5px solid var(--border)",
+            borderRadius: "var(--radius)",
+            background: "var(--surface)",
+            cursor: "pointer",
+            fontSize: "16px",
+            color: "var(--text-primary)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "border-color 0.15s"
+          }}
+        >
           −
         </button>
-        <span style={{ fontFamily: "var(--font)", fontSize: "20px", fontWeight: "500", minWidth: "24px", textAlign: "center" }}>
+        <span style={{ fontFamily: "var(--font)", fontSize: "20px", fontWeight: "600", minWidth: "30px", textAlign: "center" }}>
           {value}
         </span>
-        <button onClick={() => onUpdate(value + 1)}
-          style={{ width: "24px", height: "24px", border: "0.5px solid var(--border)", borderRadius: "4px", background: "var(--bg-secondary)", cursor: "pointer", fontSize: "14px", color: "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <button
+          type="button"
+          onClick={() => onUpdate(value + 1)}
+          aria-label={`Increase ${label}`}
+          style={{
+            width: "32px",
+            height: "32px",
+            border: "0.5px solid var(--border)",
+            borderRadius: "var(--radius)",
+            background: "var(--surface)",
+            cursor: "pointer",
+            fontSize: "16px",
+            color: "var(--text-primary)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "border-color 0.15s"
+          }}
+        >
           +
         </button>
       </div>
@@ -185,11 +228,11 @@ function StatCounter({ label, value, onUpdate }) {
 function DashboardSkeleton() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
+      <div className="grid-responsive-3">
         {[1, 2, 3].map((i) => (
           <div key={i} className="card">
             <div className="skeleton" style={{ height: "12px", width: "60%", marginBottom: "12px" }} />
-            <div className="skeleton" style={{ height: "60px", width: "80px" }} />
+            <div className="skeleton" style={{ height: "48px", width: "80px" }} />
           </div>
         ))}
       </div>
