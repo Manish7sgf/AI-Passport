@@ -78,14 +78,13 @@ def init_db() -> None:
     """Initialize the connection pool and create tables."""
     global _pool
     dsn = os.environ["DATABASE_URL"]
-    ssl_mode = "require" if os.getenv("NODE_ENV") == "production" else "disable"
 
-    _pool = pg_pool.ThreadedConnectionPool(
-        minconn=1,
-        maxconn=10,
-        dsn=dsn,
-        sslmode=ssl_mode,
-    )
+    # If sslmode is already in DSN or NODE_ENV is production or it's a cloud DB, ensure ssl is handled cleanly
+    if "sslmode=" in dsn:
+        _pool = pg_pool.ThreadedConnectionPool(minconn=1, maxconn=10, dsn=dsn)
+    else:
+        ssl_mode = "require" if (os.getenv("NODE_ENV") == "production" or "localhost" not in dsn) else "disable"
+        _pool = pg_pool.ThreadedConnectionPool(minconn=1, maxconn=10, dsn=dsn, sslmode=ssl_mode)
 
     with get_conn() as conn:
         with conn.cursor() as cur:
