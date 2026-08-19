@@ -56,7 +56,8 @@ export default function Auth() {
 
   const handleGitHub = () => {
     // Strip /api suffix — the OAuth route is at /api/auth/github, not /auth/github
-    const base = import.meta.env.VITE_API_BASE_URL.replace(/\/api\/?$/, "");
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || "https://ai-passport-1.onrender.com/api";
+    const base = apiUrl.replace(/\/api\/?$/, "");
     window.location.href = `${base}/api/auth/github`;
   };
 

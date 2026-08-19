@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || "https://ai-passport-1.onrender.com/api",
   timeout: 90000 // 90s — covers Nvidia NIM + Render cold start
 });
 
