@@ -92,7 +92,7 @@ def init_db() -> None:
             cur.execute(MIGRATION_SQL)
         conn.commit()
 
-    print("✅ PostgreSQL connected and tables ready")
+    print("[OK] PostgreSQL connected and tables ready")
 
 
 class get_conn:
