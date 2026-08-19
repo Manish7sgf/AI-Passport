@@ -42,11 +42,58 @@ def _derive_contribution_level(repo: dict) -> str:
     return "low"
 
 
+def check_repository_ownership(
+    owner: str, repo: str, github_username: str | None, user_token: str | None = None
+) -> tuple[bool, str]:
+    """
+    Verify if the user is the owner or a contributor of the repository.
+    Returns (is_valid, role_description):
+      - (True, "owner") if user owns the repository
+      - (True, "contributor") if user has verified commits in repository
+      - (False, error_reason) if user neither owns nor contributed to the repository
+    """
+    if not github_username:
+        return True, "unlinked"
+
+    # 1. Direct owner check (case-insensitive)
+    if owner.strip().lower() == github_username.strip().lower():
+        return True, "owner"
+
+    # 2. Check if user contributed commits to this repository
+    headers = _get_headers(user_token)
+    try:
+        with httpx.Client(timeout=15, follow_redirects=True) as client:
+            res = client.get(
+                f"https://api.github.com/repos/{owner}/{repo}/commits",
+                params={"author": github_username, "per_page": 1},
+                headers=headers,
+            )
+            if res.status_code == 401 and "Authorization" in headers:
+                headers_public = {"Accept": "application/vnd.github.v3+json", "User-Agent": "AI-Future-Passport"}
+                res = client.get(
+                    f"https://api.github.com/repos/{owner}/{repo}/commits",
+                    params={"author": github_username, "per_page": 1},
+                    headers=headers_public,
+                )
+
+            if res.is_success:
+                commits = res.json()
+                if isinstance(commits, list) and len(commits) > 0:
+                    return True, "contributor"
+    except Exception as e:
+        print(f"Contribution check note: {e}")
+
+    return (
+        False,
+        f"Ownership verification failed: You (@{github_username}) are neither the owner nor a contributor of this repository ({owner}/{repo}). Please enter repositories you created or contributed to.",
+    )
+
+
 def fetch_repo_data(owner: str, repo: str, user_token: str | None = None) -> dict:
     """Fetch repo metadata, languages, and README with automatic auth fallback."""
     headers = _get_headers(user_token)
 
-    with httpx.Client(timeout=25) as client:
+    with httpx.Client(timeout=25, follow_redirects=True) as client:
         repo_res = client.get(f"https://api.github.com/repos/{owner}/{repo}", headers=headers)
 
         # If token was invalid/expired (401), retry without auth header (public access)

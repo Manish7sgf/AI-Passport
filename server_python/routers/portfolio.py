@@ -36,8 +36,17 @@ def verify(body: VerifyBody, current_user: dict = Depends(verify_token)):
 
     owner, repo = match.group(1), match.group(2)
 
-    # Fetch GitHub data with user token / public fallback
+    # 1. Cross-check repository ownership / contribution
+    gh_username = current_user.get("github_username")
     user_gh_token = current_user.get("github_token")
+
+    is_valid, role_or_reason = github_service.check_repository_ownership(
+        owner, repo, gh_username, user_gh_token
+    )
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=role_or_reason)
+
+    # 2. Fetch GitHub data with user token / public fallback
     gh = github_service.fetch_repo_data(owner, repo, user_gh_token)
 
     # AI analysis

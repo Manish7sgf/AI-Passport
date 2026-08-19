@@ -38,6 +38,7 @@ api.interceptors.response.use(
     }
 
     const message =
+      err.response?.data?.detail ||
       err.response?.data?.error ||
       (err.code === "ECONNABORTED" ? "Request timed out — the server may be waking up, please try again" : null) ||
       (err.message === "Network Error" ? "Could not reach server — please check your connection" : null) ||
