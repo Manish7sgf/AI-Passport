@@ -31,36 +31,57 @@ def sync_repos(current_user: dict = Depends(verify_token)):
 
     user_id = str(current_user["id"])
 
-    # Existing repo URLs
-    existing_rows = fetch_all("SELECT repo_url FROM portfolio_items WHERE user_id = %s", (user_id,))
-    existing_urls = {r["repo_url"] for r in existing_rows}
-
-    new_repos = [r for r in synced_repos if r["repo_url"] not in existing_urls]
-    skipped = len(synced_repos) - len(new_repos)
+    # Existing repo map (normalized lowercase without trailing slash)
+    existing_rows = fetch_all("SELECT id, repo_url, verified FROM portfolio_items WHERE user_id = %s", (user_id,))
+    existing_map = {r["repo_url"].rstrip("/").lower(): r for r in existing_rows}
 
     synced_count = 0
-    for repo in new_repos:
-        result = execute(
-            """INSERT INTO portfolio_items
-                 (user_id, repo_url, title, description, tech_stack, ai_summary,
-                  contribution_level, verified, source)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-               ON CONFLICT DO NOTHING
-               RETURNING id""",
-            (
-                user_id,
-                repo["repo_url"],
-                repo["title"],
-                repo["description"],
-                json.dumps(repo["tech_stack"]),
-                json.dumps(repo["github_data"]),
-                repo["contribution_level"],
-                False,
-                "github_sync",
-            ),
-        )
-        if result:
-            synced_count += 1
+    skipped = 0
+
+    for repo in synced_repos:
+        clean_url = repo["repo_url"].rstrip("/")
+        norm_key = clean_url.lower()
+
+        if norm_key in existing_map:
+            # If repo already exists but is not yet verified, refresh contribution_level and tech stack
+            existing = existing_map[norm_key]
+            if not existing.get("verified"):
+                execute(
+                    """UPDATE portfolio_items SET
+                         contribution_level = %s,
+                         tech_stack = %s,
+                         ai_summary = %s
+                       WHERE id = %s""",
+                    (
+                        repo["contribution_level"],
+                        json.dumps(repo["tech_stack"]),
+                        json.dumps(repo["github_data"]),
+                        str(existing["id"]),
+                    ),
+                )
+            skipped += 1
+        else:
+            result = execute(
+                """INSERT INTO portfolio_items
+                     (user_id, repo_url, title, description, tech_stack, ai_summary,
+                      contribution_level, verified, source)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                   RETURNING id""",
+                (
+                    user_id,
+                    clean_url,
+                    repo["title"],
+                    repo["description"],
+                    json.dumps(repo["tech_stack"]),
+                    json.dumps(repo["github_data"]),
+                    repo["contribution_level"],
+                    False,
+                    "github_sync",
+                ),
+            )
+            if result:
+                synced_count += 1
+                existing_map[norm_key] = {"id": result.get("id"), "repo_url": clean_url, "verified": False}
 
     # Merge detected skills into passport
     detected_skills = github_service.extract_skills_from_repos(synced_repos)

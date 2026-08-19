@@ -40,8 +40,34 @@ export default function Portfolio() {
     }
   };
 
-  const verified  = portfolio.filter((p) => p.verified);
-  const synced    = portfolio.filter((p) => !p.verified && p.source === "github_sync");
+  // 1. All verified projects (deduplicated by normalized repo_url)
+  const verifiedMap = new Map();
+  portfolio
+    .filter((p) => p.verified)
+    .forEach((p) => {
+      const key = p.repo_url?.trim().replace(/\/+$/, "").toLowerCase() || p.id;
+      if (!verifiedMap.has(key)) verifiedMap.set(key, p);
+    });
+  const verified = Array.from(verifiedMap.values());
+
+  // 2. Set of verified repo URLs to strictly exclude from unverified sync list
+  const verifiedUrlSet = new Set(
+    verified
+      .map((p) => p.repo_url?.trim().replace(/\/+$/, "").toLowerCase())
+      .filter(Boolean)
+  );
+
+  // 3. Unverified repos (deduplicated by repo_url, excluding any verified repo)
+  const syncedMap = new Map();
+  portfolio
+    .filter((p) => !p.verified && p.source === "github_sync")
+    .forEach((p) => {
+      const key = p.repo_url?.trim().replace(/\/+$/, "").toLowerCase();
+      if (key && !verifiedUrlSet.has(key) && !syncedMap.has(key)) {
+        syncedMap.set(key, p);
+      }
+    });
+  const synced = Array.from(syncedMap.values());
   const hasGitHub = !!user?.github_username;
 
   return (

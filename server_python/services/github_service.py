@@ -29,15 +29,53 @@ def _check_rate_limit(response: httpx.Response) -> None:
         raise HTTPException(status_code=429, detail="GitHub API limit reached, please try again later")
 
 
-def _derive_contribution_level(repo: dict) -> str:
+def _derive_contribution_level(repo: dict, languages: dict | None = None) -> str:
+    """
+    Derive realistic contribution level based on code size,
+    polyglot tech stack depth, documentation, and maturity signals.
+    """
     score = 0
-    score += 2 if repo.get("stargazers_count", 0) >= 5 else 0
-    size = repo.get("size", 0)
-    score += 2 if size >= 500 else (1 if size >= 100 else 0)
-    score += 1 if repo.get("open_issues_count", 0) >= 2 else 0
-    if score >= 4:
+    size = repo.get("size", 0)  # size in KB
+    lang_count = len(languages) if languages else (1 if repo.get("language") else 0)
+
+    # 1. Code volume & Project Size (KB)
+    if size >= 800:        # > 800 KB
+        score += 3
+    elif size >= 200:      # > 200 KB
+        score += 2
+    elif size >= 30:       # > 30 KB
+        score += 1
+
+    # 2. Multi-language / Full-Stack Depth
+    if lang_count >= 4:
+        score += 3         # Full-stack (e.g. Python + JS + CSS + HTML)
+    elif lang_count >= 2:
+        score += 2         # Multi-tech (e.g. Backend + Frontend / App + Scripts)
+    elif lang_count >= 1:
+        score += 1
+
+    # 3. Project Documentation & Metadata
+    desc = repo.get("description") or ""
+    if len(desc.strip()) >= 25:
+        score += 1
+    if repo.get("topics") and len(repo.get("topics", [])) >= 1:
+        score += 1
+
+    # 4. Community Traction
+    if repo.get("stargazers_count", 0) >= 3:
+        score += 2
+    elif repo.get("stargazers_count", 0) >= 1:
+        score += 1
+    if repo.get("forks_count", 0) >= 1:
+        score += 1
+
+    # Thresholds:
+    # High: Full-stack / rich multi-technology projects (score >= 5)
+    # Medium: Solid multi-file projects with documentation (score >= 3)
+    # Low: Minimal single-script or skeleton repositories (score < 3)
+    if score >= 5:
         return "high"
-    if score >= 2:
+    if score >= 3:
         return "medium"
     return "low"
 
@@ -156,7 +194,7 @@ def sync_user_repos(github_username: str, user_token: str | None = None) -> list
 
     repos = res.json()
     own_repos = [r for r in repos if not r.get("fork") and r.get("size", 0) > 0 and r.get("language")]
-    top_repos = own_repos[:10]
+    top_repos = own_repos[:25]
 
     result = []
     with httpx.Client(timeout=15) as client:
@@ -173,7 +211,7 @@ def sync_user_repos(github_username: str, user_token: str | None = None) -> list
                 "description":        repo.get("description") or "",
                 "tech_stack":         list(languages.keys())[:8],
                 "stars":              repo.get("stargazers_count", 0),
-                "contribution_level": _derive_contribution_level(repo),
+                "contribution_level": _derive_contribution_level(repo, languages),
                 "source":             "github_sync",
                 "github_data": {
                     "full_name":   repo.get("full_name"),

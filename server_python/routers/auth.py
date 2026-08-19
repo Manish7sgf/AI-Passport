@@ -218,10 +218,11 @@ def github_callback(code: str | None = None):
 
         synced_repos = github_service.sync_user_repos(profile["login"], access_token)
         for repo in synced_repos:
+            clean_url = repo["repo_url"].rstrip("/")
             # Avoid inserting duplicate repo URLs for this user
             existing_repo = fetch_one(
-                "SELECT id FROM portfolio_items WHERE user_id = %s AND repo_url = %s",
-                (str(user["id"]), repo["repo_url"]),
+                "SELECT id, verified FROM portfolio_items WHERE user_id = %s AND (repo_url ILIKE %s OR repo_url ILIKE %s)",
+                (str(user["id"]), clean_url, f"{clean_url}/"),
             )
             if not existing_repo:
                 execute(
@@ -231,7 +232,7 @@ def github_callback(code: str | None = None):
                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                     (
                         str(user["id"]),
-                        repo["repo_url"],
+                        clean_url,
                         repo["title"],
                         repo["description"],
                         json.dumps(repo["tech_stack"]),
@@ -239,6 +240,20 @@ def github_callback(code: str | None = None):
                         repo["contribution_level"],
                         False,
                         "github_sync",
+                    ),
+                )
+            elif not existing_repo.get("verified"):
+                execute(
+                    """UPDATE portfolio_items SET
+                         contribution_level = %s,
+                         tech_stack = %s,
+                         ai_summary = %s
+                       WHERE id = %s""",
+                    (
+                        repo["contribution_level"],
+                        json.dumps(repo["tech_stack"]),
+                        json.dumps(repo["github_data"]),
+                        str(existing_repo["id"]),
                     ),
                 )
 
