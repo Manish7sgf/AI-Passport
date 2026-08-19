@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
+import Logo from "../components/ui/Logo";
 
 export default function Auth() {
   const [mode, setMode] = useState("login");
@@ -66,42 +67,13 @@ export default function Auth() {
       {/* Left branding panel */}
       <div className="auth-hero-panel">
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "8px",
-                background: "var(--accent-text)",
-                color: "var(--accent)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "var(--font)",
-                fontSize: "14px",
-                fontWeight: "700"
-              }}
-            >
-              FP
-            </div>
-            <span
-              style={{
-                fontFamily: "var(--font)",
-                fontSize: "24px",
-                fontWeight: "600",
-                color: "var(--accent-text)",
-                letterSpacing: "-0.02em"
-              }}
-            >
-              AI Passport
-            </span>
-          </div>
+          <Logo size={36} theme="dark" />
           <p
             style={{
               fontFamily: "var(--font-body)",
               fontSize: "14px",
               color: "rgba(245,244,240,0.7)",
-              marginTop: "12px",
+              marginTop: "16px",
               lineHeight: "1.5"
             }}
           >

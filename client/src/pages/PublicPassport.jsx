@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import api from "../api";
 import ScoreRing from "../components/passport/ScoreRing";
 import BadgeGrid from "../components/passport/BadgeGrid";
+import Logo from "../components/ui/Logo";
 import { getScoreLabel, getScoreColor, toPercent } from "../utils/scoreCalc";
 import { formatDate, getInitials } from "../utils/formatters";
 
@@ -28,10 +29,23 @@ export default function PublicPassport() {
   const interests = Array.isArray(passport?.interests) ? passport.interests : [];
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", padding: "32px 16px" }}>
-      <div style={{ maxWidth: "720px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", padding: "24px 16px 48px" }}>
+      <div style={{ maxWidth: "720px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
 
-        {/* Header */}
+        {/* Platform top banner */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 4px" }}>
+          <Link to="/" style={{ textDecoration: "none" }}>
+            <Logo size={26} />
+          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />
+            <span style={{ fontFamily: "var(--font)", fontSize: "11px", color: "var(--text-tertiary)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Verified Profile
+            </span>
+          </div>
+        </div>
+
+        {/* Header Card */}
         <div
           className="card"
           style={{

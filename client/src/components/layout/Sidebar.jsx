@@ -4,6 +4,7 @@ import useAuthStore from "../../store/authStore";
 import useUserStore from "../../store/userStore";
 import { getScoreColor } from "../../utils/scoreCalc";
 import { getInitials } from "../../utils/formatters";
+import { LogoIcon } from "../ui/Logo";
 
 const navItems = [
   { to: "/dashboard", label: "Passport", icon: PassportIcon },
@@ -77,37 +78,35 @@ export default function Sidebar({
             minWidth: 0
           }}
         >
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "6px",
-              background: "var(--text-primary)",
-              color: "var(--accent-text)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: "var(--font)",
-              fontSize: "12px",
-              fontWeight: "600",
-              flexShrink: 0
-            }}
-          >
-            FP
-          </div>
+          <LogoIcon size={28} />
           {!collapsed && (
-            <span
-              style={{
-                fontFamily: "var(--font)",
-                fontSize: "15px",
-                fontWeight: "600",
-                color: "var(--text-primary)",
-                letterSpacing: "-0.02em",
-                whiteSpace: "nowrap"
-              }}
-            >
-              AI Passport
-            </span>
+            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
+              <span
+                style={{
+                  fontFamily: "var(--font)",
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  color: "var(--text-primary)",
+                  letterSpacing: "-0.02em",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                AI Passport
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font)",
+                  fontSize: "9px",
+                  fontWeight: "500",
+                  color: "var(--text-tertiary)",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  marginTop: "1px"
+                }}
+              >
+                Future Passport
+              </span>
+            </div>
           )}
         </NavLink>
 
