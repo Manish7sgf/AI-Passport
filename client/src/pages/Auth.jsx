@@ -10,7 +10,7 @@ export default function Auth() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login, register, isLoading, isAuthenticated, setToken } = useAuthStore();
+  const { login, register, isLoading, isAuthenticated, user, setToken, fetchMe } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -20,7 +20,9 @@ export default function Auth() {
     const oauthError = searchParams.get("error");
     if (token) {
       setToken(token);
-      navigate("/dashboard");
+      fetchMe().then(() => {
+        navigate("/dashboard", { replace: true });
+      });
     }
     if (oauthError) {
       setError("GitHub authentication failed. Please try again.");
@@ -28,8 +30,10 @@ export default function Auth() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/dashboard");
-  }, [isAuthenticated]);
+    if (isAuthenticated && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

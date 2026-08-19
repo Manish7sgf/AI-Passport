@@ -9,7 +9,7 @@ import ProfileCompletion from "../components/passport/ProfileCompletion";
 import { getScoreColor, getScoreLabel, toPercent } from "../utils/scoreCalc";
 
 export default function Dashboard() {
-  const { user } = useAuthStore();
+  const { user, isInitialising } = useAuthStore();
   const { passport, portfolio, isLoading, fetchPassport, fetchPortfolio, updatePassport, removePortfolioItem } =
     useUserStore();
   const { add, checkScoreChange } = useNotificationStore();
@@ -43,7 +43,7 @@ export default function Dashboard() {
     await removePortfolioItem(id, user.id);
   };
 
-  if (isLoading && !passport) return <DashboardSkeleton />;
+  if (isInitialising || (isLoading && !passport)) return <DashboardSkeleton />;
 
   const score          = passport?.employability_score ?? 0;
   const breakdown      = passport?.score_breakdown || {};
