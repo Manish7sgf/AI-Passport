@@ -91,16 +91,16 @@ export default function Portfolio() {
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
               <GitHubIcon />
               <span style={{ fontFamily: "var(--font)", fontSize: "13px", fontWeight: "500" }}>
-                GitHub Repository Auto-Sync
+                GitHub Repository Auto-Sync & AI Verification
               </span>
             </div>
             {hasGitHub ? (
               <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-                Linked account: @{user.github_username} · {synced.length} repos synced
+                Linked: @{user.github_username} · {verified.length} AI-verified projects
               </p>
             ) : (
               <p style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
-                Sign in with GitHub OAuth to automatically import public repositories
+                Sign in with GitHub OAuth to automatically import and AI-verify your public repositories
               </p>
             )}
             {syncResult && (
@@ -123,10 +123,10 @@ export default function Portfolio() {
             {isSyncing ? (
               <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <Spinner size={13} />
-                Syncing...
+                Syncing & Verifying...
               </span>
             ) : (
-              "Sync repos →"
+              "Sync & Auto-Verify Repos"
             )}
           </Button>
         </div>

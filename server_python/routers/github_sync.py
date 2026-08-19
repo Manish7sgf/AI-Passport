@@ -38,28 +38,56 @@ def sync_repos(current_user: dict = Depends(verify_token)):
     synced_count = 0
     skipped = 0
 
+    from services import nvidia_service
+
+    all_demonstrated_skills = []
+
     for repo in synced_repos:
         clean_url = repo["repo_url"].rstrip("/")
         norm_key = clean_url.lower()
 
-        if norm_key in existing_map:
-            # If repo already exists but is not yet verified, refresh contribution_level and tech stack
-            existing = existing_map[norm_key]
-            if not existing.get("verified"):
-                execute(
-                    """UPDATE portfolio_items SET
-                         contribution_level = %s,
-                         tech_stack = %s,
-                         ai_summary = %s
-                       WHERE id = %s""",
-                    (
-                        repo["contribution_level"],
-                        json.dumps(repo["tech_stack"]),
-                        json.dumps(repo["github_data"]),
-                        str(existing["id"]),
-                    ),
-                )
+        # If repo is already verified, skip
+        if norm_key in existing_map and existing_map[norm_key].get("verified"):
             skipped += 1
+            continue
+
+        # AI analysis & verification
+        analysis = nvidia_service.analyse_repo(
+            repo["github_data"],
+            repo["github_data"].get("languages", {}),
+            ""
+        )
+        ai_summary = json.dumps({
+            "contribution_reason": analysis.get("contribution_reason") or "Analyzed and verified via AI Code Analysis.",
+            "complexity_score":    analysis.get("complexity_score", 6),
+            "skills_demonstrated": analysis.get("skills_demonstrated", repo["tech_stack"]),
+        })
+
+        skills_demonstrated = analysis.get("skills_demonstrated", [])
+        all_demonstrated_skills.extend(skills_demonstrated)
+
+        if norm_key in existing_map:
+            # Upgrade existing unverified row to verified with AI analysis
+            existing = existing_map[norm_key]
+            execute(
+                """UPDATE portfolio_items SET
+                     title = %s,
+                     description = COALESCE(NULLIF(%s, ''), description),
+                     tech_stack = %s,
+                     ai_summary = %s,
+                     contribution_level = %s,
+                     verified = TRUE
+                   WHERE id = %s""",
+                (
+                    analysis.get("title") or repo["title"],
+                    analysis.get("description") or repo["description"],
+                    json.dumps(analysis.get("tech_stack") or repo["tech_stack"]),
+                    ai_summary,
+                    analysis.get("contribution_level") or repo["contribution_level"],
+                    str(existing["id"]),
+                ),
+            )
+            synced_count += 1
         else:
             result = execute(
                 """INSERT INTO portfolio_items
@@ -70,18 +98,18 @@ def sync_repos(current_user: dict = Depends(verify_token)):
                 (
                     user_id,
                     clean_url,
-                    repo["title"],
-                    repo["description"],
-                    json.dumps(repo["tech_stack"]),
-                    json.dumps(repo["github_data"]),
-                    repo["contribution_level"],
-                    False,
+                    analysis.get("title") or repo["title"],
+                    analysis.get("description") or repo["description"],
+                    json.dumps(analysis.get("tech_stack") or repo["tech_stack"]),
+                    ai_summary,
+                    analysis.get("contribution_level") or repo["contribution_level"],
+                    True,
                     "github_sync",
                 ),
             )
             if result:
                 synced_count += 1
-                existing_map[norm_key] = {"id": result.get("id"), "repo_url": clean_url, "verified": False}
+                existing_map[norm_key] = {"id": result.get("id"), "repo_url": clean_url, "verified": True}
 
     # Merge detected skills into passport
     detected_skills = github_service.extract_skills_from_repos(synced_repos)
@@ -93,7 +121,7 @@ def sync_repos(current_user: dict = Depends(verify_token)):
         if isinstance(existing_skills, str):
             existing_skills = json.loads(existing_skills)
 
-    merged = list(dict.fromkeys(existing_skills + [s for s in detected_skills if s not in existing_skills]))
+    merged = list(dict.fromkeys(existing_skills + detected_skills + all_demonstrated_skills))
     skills_added = [s for s in merged if s not in existing_skills]
 
     if skills_added:

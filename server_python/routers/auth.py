@@ -213,17 +213,35 @@ def github_callback(code: str | None = None):
 
     # Auto-sync repositories & skills on GitHub login safely
     try:
-        from services import github_service
+        from services import github_service, nvidia_service
         from services.score_service import calculate_score
 
         synced_repos = github_service.sync_user_repos(profile["login"], access_token)
+        all_demonstrated_skills = []
+
         for repo in synced_repos:
             clean_url = repo["repo_url"].rstrip("/")
-            # Avoid inserting duplicate repo URLs for this user
+            # Check if repo already exists
             existing_repo = fetch_one(
                 "SELECT id, verified FROM portfolio_items WHERE user_id = %s AND (repo_url ILIKE %s OR repo_url ILIKE %s)",
                 (str(user["id"]), clean_url, f"{clean_url}/"),
             )
+            if existing_repo and existing_repo.get("verified"):
+                continue
+
+            # Run AI analysis
+            analysis = nvidia_service.analyse_repo(
+                repo["github_data"],
+                repo["github_data"].get("languages", {}),
+                ""
+            )
+            ai_summary = json.dumps({
+                "contribution_reason": analysis.get("contribution_reason") or "Analyzed and verified via AI Code Analysis.",
+                "complexity_score":    analysis.get("complexity_score", 6),
+                "skills_demonstrated": analysis.get("skills_demonstrated", repo["tech_stack"]),
+            })
+            all_demonstrated_skills.extend(analysis.get("skills_demonstrated", []))
+
             if not existing_repo:
                 execute(
                     """INSERT INTO portfolio_items
@@ -233,38 +251,43 @@ def github_callback(code: str | None = None):
                     (
                         str(user["id"]),
                         clean_url,
-                        repo["title"],
-                        repo["description"],
-                        json.dumps(repo["tech_stack"]),
-                        json.dumps(repo["github_data"]),
-                        repo["contribution_level"],
-                        False,
+                        analysis.get("title") or repo["title"],
+                        analysis.get("description") or repo["description"],
+                        json.dumps(analysis.get("tech_stack") or repo["tech_stack"]),
+                        ai_summary,
+                        analysis.get("contribution_level") or repo["contribution_level"],
+                        True,
                         "github_sync",
                     ),
                 )
-            elif not existing_repo.get("verified"):
+            else:
                 execute(
                     """UPDATE portfolio_items SET
-                         contribution_level = %s,
+                         title = %s,
+                         description = COALESCE(NULLIF(%s, ''), description),
                          tech_stack = %s,
-                         ai_summary = %s
+                         ai_summary = %s,
+                         contribution_level = %s,
+                         verified = TRUE
                        WHERE id = %s""",
                     (
-                        repo["contribution_level"],
-                        json.dumps(repo["tech_stack"]),
-                        json.dumps(repo["github_data"]),
+                        analysis.get("title") or repo["title"],
+                        analysis.get("description") or repo["description"],
+                        json.dumps(analysis.get("tech_stack") or repo["tech_stack"]),
+                        ai_summary,
+                        analysis.get("contribution_level") or repo["contribution_level"],
                         str(existing_repo["id"]),
                     ),
                 )
 
         detected_skills = github_service.extract_skills_from_repos(synced_repos)
-        if detected_skills:
+        if detected_skills or all_demonstrated_skills:
             # Merge with existing skills in passport
             existing_p = fetch_one("SELECT skills FROM passports WHERE user_id = %s", (str(user["id"]),))
             cur_skills = existing_p.get("skills") or [] if existing_p else []
             if isinstance(cur_skills, str):
                 cur_skills = json.loads(cur_skills)
-            merged = list(dict.fromkeys(cur_skills + [s for s in detected_skills if s not in cur_skills]))
+            merged = list(dict.fromkeys(cur_skills + detected_skills + all_demonstrated_skills))
             execute(
                 "UPDATE passports SET skills = %s, last_updated = NOW() WHERE user_id = %s",
                 (json.dumps(merged), str(user["id"])),
