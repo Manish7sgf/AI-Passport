@@ -67,6 +67,17 @@ CREATE TABLE IF NOT EXISTS skill_gaps (
     recommendations JSONB DEFAULT '[]',
     created_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS verified_activities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    activity_type VARCHAR(50) NOT NULL, -- 'hackathon', 'open_source_pr', 'mentoring'
+    title VARCHAR(255) NOT NULL,
+    proof_url TEXT,
+    details JSONB DEFAULT '{}'::jsonb,
+    verified BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 """
 
 MIGRATION_SQL = """

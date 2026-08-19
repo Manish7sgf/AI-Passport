@@ -95,6 +95,13 @@ export const githubAPI = {
   status: () => api.get("/github/status")
 };
 
+// ── Activities (Proof-Backed Credentials) ────────────────────────────────────
+export const activitiesAPI = {
+  list:   (userId) => api.get(`/activities/${userId}`),
+  add:    (data)   => api.post("/activities", data),
+  remove: (id)     => api.delete(`/activities/${id}`)
+};
+
 // ── Public (no auth) ──────────────────────────────────────────────────────────
 export const publicAPI = {
   getPassport: (username) => api.get(`/public/passport/${username}`)

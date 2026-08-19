@@ -17,7 +17,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from config.database import init_db
-from routers import auth, passport, timemachine, radar, portfolio, score, github_sync, public
+from routers import auth, passport, timemachine, radar, portfolio, score, github_sync, public, activities
 
 # ── Lifespan (startup / shutdown) ────────────────────────────────────────────
 
@@ -61,7 +61,7 @@ app.add_middleware(
 @app.middleware("http")
 async def ensure_api_prefix(request: Request, call_next):
     path = request.url.path
-    api_prefixes = ("/auth", "/passport", "/portfolio", "/radar", "/timemachine", "/score", "/github", "/public")
+    api_prefixes = ("/auth", "/passport", "/portfolio", "/radar", "/timemachine", "/score", "/github", "/public", "/activities")
     if any(path.startswith(p) for p in api_prefixes) and not path.startswith("/api"):
         request.scope["path"] = f"/api{path}"
     return await call_next(request)
@@ -104,6 +104,7 @@ app.include_router(portfolio.router)
 app.include_router(score.router)
 app.include_router(github_sync.router)
 app.include_router(public.router)
+app.include_router(activities.router)
 
 
 # ── Utility endpoints ─────────────────────────────────────────────────────────

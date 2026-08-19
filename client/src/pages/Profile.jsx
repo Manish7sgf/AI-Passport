@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import useAuthStore from "../store/authStore";
 import useUserStore from "../store/userStore";
 import { getInitials, formatDate } from "../utils/formatters";
@@ -6,7 +6,14 @@ import ScoreRing from "../components/passport/ScoreRing";
 
 export default function Profile() {
   const { user } = useAuthStore();
-  const { passport } = useUserStore();
+  const { passport, activities, fetchActivities, fetchPassport } = useUserStore();
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchPassport(user.id);
+      fetchActivities(user.id);
+    }
+  }, [user?.id]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -84,9 +91,9 @@ export default function Profile() {
               { label: "Member since", value: formatDate(user?.created_at) },
               { label: "Last updated", value: formatDate(passport.last_updated) },
               { label: "Skills logged", value: (passport.skills || []).length },
-              { label: "Hackathons", value: passport.hackathons || 0 },
-              { label: "Open source PRs", value: passport.open_source_prs || 0 },
-              { label: "Mentoring sessions", value: passport.mentoring_sessions || 0 }
+              { label: "Hackathons", value: activities.filter(a => a.activity_type === "hackathon").length || passport.hackathons || 0 },
+              { label: "Open source PRs", value: activities.filter(a => a.activity_type === "open_source_pr").length || passport.open_source_prs || 0 },
+              { label: "Mentoring sessions", value: activities.filter(a => a.activity_type === "mentoring").length || passport.mentoring_sessions || 0 }
             ].map(({ label, value }) => (
               <div
                 key={label}
@@ -104,6 +111,71 @@ export default function Profile() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Verified Activity Proof List */}
+      {activities.length > 0 && (
+        <div className="card">
+          <span className="section-label" style={{ display: "block", marginBottom: "16px" }}>Verified Proof & Credentials</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {activities.map((a) => {
+              const details = typeof a.details === "string" ? JSON.parse(a.details || "{}") : a.details || {};
+              const typeIcon = a.activity_type === "hackathon" ? "🏆" : a.activity_type === "open_source_pr" ? "🐙" : "👥";
+              const typeLabel = a.activity_type === "hackathon" ? "Hackathon" : a.activity_type === "open_source_pr" ? "Open Source PR" : "Mentoring";
+
+              return (
+                <div
+                  key={a.id}
+                  style={{
+                    padding: "12px 14px",
+                    background: "var(--bg-secondary)",
+                    borderRadius: "var(--radius)",
+                    border: "0.5px solid var(--border)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "10px"
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: "200px" }}>
+                    <span style={{ fontSize: "18px" }}>{typeIcon}</span>
+                    <div>
+                      <div style={{ fontSize: "13px", fontWeight: "500" }}>{a.title}</div>
+                      <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "2px" }}>
+                        <span style={{ textTransform: "uppercase", fontFamily: "var(--font)", fontSize: "10px", color: "var(--text-tertiary)", marginRight: "6px" }}>
+                          {typeLabel}
+                        </span>
+                        {details.role_or_award && `· ${details.role_or_award}`}
+                        {details.year_or_date && ` · ${details.year_or_date}`}
+                      </div>
+                    </div>
+                  </div>
+
+                  {a.proof_url && (
+                    <a
+                      href={a.proof_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: "11px",
+                        fontFamily: "var(--font)",
+                        color: "var(--text-primary)",
+                        background: "var(--surface)",
+                        border: "0.5px solid var(--border)",
+                        borderRadius: "var(--radius)",
+                        padding: "4px 10px",
+                        textDecoration: "none"
+                      }}
+                    >
+                      View Proof ↗
+                    </a>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

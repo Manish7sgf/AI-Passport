@@ -1,9 +1,10 @@
 import { create } from "zustand";
-import { passportAPI, portfolioAPI, scoreAPI, githubAPI } from "../api";
+import { passportAPI, portfolioAPI, scoreAPI, githubAPI, activitiesAPI } from "../api";
 
 const useUserStore = create((set, get) => ({
   passport:      null,
   portfolio:     [],
+  activities:    [],
   score:         null,
   isLoading:     false,
   isSyncing:     false,   // GitHub sync in progress
@@ -77,6 +78,40 @@ const useUserStore = create((set, get) => ({
       const score = await scoreAPI.recalculate();
       set({ score });
       return score;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  fetchActivities: async (userId) => {
+    try {
+      const items = await activitiesAPI.list(userId);
+      set({ activities: items || [] });
+      return items;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  addActivity: async (data, userId) => {
+    try {
+      const res = await activitiesAPI.add(data);
+      await Promise.all([
+        get().fetchActivities(userId),
+        get().fetchPassport(userId)
+      ]);
+      return res;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  removeActivity: async (id, userId) => {
+    try {
+      await activitiesAPI.remove(id);
+      const items = get().activities.filter((a) => a.id !== id);
+      set({ activities: items });
+      await get().fetchPassport(userId);
     } catch (err) {
       throw err;
     }

@@ -6,20 +6,37 @@ import ScoreRing from "../components/passport/ScoreRing";
 import PassportCard from "../components/passport/PassportCard";
 import PortfolioCard from "../components/portfolio/PortfolioCard";
 import ProfileCompletion from "../components/passport/ProfileCompletion";
+import ActivityModal from "../components/passport/ActivityModal";
+import Button from "../components/ui/Button";
 import { getScoreColor, getScoreLabel, toPercent } from "../utils/scoreCalc";
 
 export default function Dashboard() {
   const { user, isInitialising } = useAuthStore();
-  const { passport, portfolio, isLoading, fetchPassport, fetchPortfolio, updatePassport, removePortfolioItem } =
-    useUserStore();
+  const {
+    passport,
+    portfolio,
+    activities,
+    isLoading,
+    fetchPassport,
+    fetchPortfolio,
+    fetchActivities,
+    addActivity,
+    removeActivity,
+    updatePassport,
+    removePortfolioItem
+  } = useUserStore();
   const { add, checkScoreChange } = useNotificationStore();
   const prevScore = useRef(null);
   const [editingPassport, setEditingPassport] = useState(false);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState("hackathon");
 
   useEffect(() => {
     if (user?.id) {
       fetchPassport(user.id);
       fetchPortfolio(user.id);
+      fetchActivities(user.id);
     }
   }, [user?.id]);
 
@@ -43,12 +60,31 @@ export default function Dashboard() {
     await removePortfolioItem(id, user.id);
   };
 
+  const handleOpenModal = (type) => {
+    setModalType(type);
+    setModalOpen(true);
+  };
+
+  const handleAddActivity = async (data) => {
+    if (!user?.id) return;
+    await addActivity(data, user.id);
+  };
+
+  const handleRemoveActivity = async (id) => {
+    if (!user?.id) return;
+    await removeActivity(id, user.id);
+  };
+
   if (isInitialising || (isLoading && !passport)) return <DashboardSkeleton />;
 
   const score          = passport?.employability_score ?? 0;
   const breakdown      = passport?.score_breakdown || {};
   const skills         = passport?.skills || [];
   const recentPortfolio = portfolio.slice(0, 3);
+
+  const hackathons = activities.filter((a) => a.activity_type === "hackathon");
+  const openSourcePrs = activities.filter((a) => a.activity_type === "open_source_pr");
+  const mentoring = activities.filter((a) => a.activity_type === "mentoring");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -99,13 +135,53 @@ export default function Dashboard() {
         onEditDone={() => setEditingPassport(false)}
       />
 
-      {/* Activity counters */}
+      {/* Verified Activity Metrics & Proof Section */}
       <div className="card">
-        <span className="section-label" style={{ display: "block", marginBottom: "16px" }}>Activity Metrics</span>
-        <div className="grid-responsive-3">
-          <StatCounter label="Hackathons" value={passport?.hackathons ?? 0} onUpdate={(v) => handleUpdatePassport({ hackathons: v })} />
-          <StatCounter label="Open Source PRs" value={passport?.open_source_prs ?? 0} onUpdate={(v) => handleUpdatePassport({ open_source_prs: v })} />
-          <StatCounter label="Mentoring Sessions" value={passport?.mentoring_sessions ?? 0} onUpdate={(v) => handleUpdatePassport({ mentoring_sessions: v })} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+          <div>
+            <span className="section-label" style={{ display: "block" }}>Verified Activity Credentials</span>
+            <p style={{ fontSize: "12px", color: "var(--text-tertiary)", marginTop: "2px" }}>
+              Submit proof-backed hackathons, pull requests, and leadership to power your score.
+            </p>
+          </div>
+          <Button size="small" variant="secondary" onClick={() => handleOpenModal("hackathon")}>
+            + Add Verified Proof
+          </Button>
+        </div>
+
+        <div className="grid-responsive-3" style={{ gap: "16px" }}>
+          {/* Hackathons */}
+          <ActivityCategoryCard
+            title="Hackathons"
+            icon="🏆"
+            count={hackathons.length || (passport?.hackathons ?? 0)}
+            items={hackathons}
+            onAdd={() => handleOpenModal("hackathon")}
+            onRemove={handleRemoveActivity}
+            emptyText="No verified hackathons logged yet."
+          />
+
+          {/* Open Source PRs */}
+          <ActivityCategoryCard
+            title="Open Source PRs"
+            icon="🐙"
+            count={openSourcePrs.length || (passport?.open_source_prs ?? 0)}
+            items={openSourcePrs}
+            onAdd={() => handleOpenModal("open_source_pr")}
+            onRemove={handleRemoveActivity}
+            emptyText="No open source PRs verified yet."
+          />
+
+          {/* Mentoring Sessions */}
+          <ActivityCategoryCard
+            title="Mentoring & Leadership"
+            icon="👥"
+            count={mentoring.length || (passport?.mentoring_sessions ?? 0)}
+            items={mentoring}
+            onAdd={() => handleOpenModal("mentoring")}
+            onRemove={handleRemoveActivity}
+            emptyText="No leadership sessions verified yet."
+          />
         </div>
       </div>
 
@@ -157,70 +233,133 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Activity Verification Modal */}
+      <ActivityModal
+        isOpen={modalOpen}
+        defaultType={modalType}
+        onClose={() => setModalOpen(false)}
+        onAdd={handleAddActivity}
+      />
     </div>
   );
 }
 
-function StatCounter({ label, value, onUpdate }) {
+function ActivityCategoryCard({ title, icon, count, items = [], onAdd, onRemove, emptyText }) {
   return (
     <div
       style={{
-        textAlign: "center",
-        padding: "12px",
+        padding: "16px",
         background: "var(--bg-secondary)",
-        borderRadius: "var(--radius)"
+        borderRadius: "var(--radius)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px"
       }}
     >
-      <div style={{ fontSize: "10px", color: "var(--text-tertiary)", fontFamily: "var(--font)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>
-        {label}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px" }}>
-        <button
-          type="button"
-          onClick={() => onUpdate(Math.max(0, value - 1))}
-          aria-label={`Decrease ${label}`}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "16px" }}>{icon}</span>
+          <span style={{ fontSize: "11px", color: "var(--text-secondary)", fontFamily: "var(--font)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            {title}
+          </span>
+        </div>
+        <span
           style={{
-            width: "32px",
-            height: "32px",
-            border: "0.5px solid var(--border)",
-            borderRadius: "var(--radius)",
+            fontFamily: "var(--font)",
+            fontSize: "12px",
+            fontWeight: "600",
             background: "var(--surface)",
-            cursor: "pointer",
-            fontSize: "16px",
-            color: "var(--text-primary)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "border-color 0.15s"
+            padding: "2px 8px",
+            borderRadius: "4px",
+            border: "0.5px solid var(--border)"
           }}
         >
-          −
-        </button>
-        <span style={{ fontFamily: "var(--font)", fontSize: "20px", fontWeight: "600", minWidth: "30px", textAlign: "center" }}>
-          {value}
+          {count}
         </span>
-        <button
-          type="button"
-          onClick={() => onUpdate(value + 1)}
-          aria-label={`Increase ${label}`}
-          style={{
-            width: "32px",
-            height: "32px",
-            border: "0.5px solid var(--border)",
-            borderRadius: "var(--radius)",
-            background: "var(--surface)",
-            cursor: "pointer",
-            fontSize: "16px",
-            color: "var(--text-primary)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "border-color 0.15s"
-          }}
-        >
-          +
-        </button>
       </div>
+
+      {items.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "150px", overflowY: "auto" }}>
+          {items.map((item) => {
+            const details = typeof item.details === "string" ? JSON.parse(item.details || "{}") : item.details || {};
+            return (
+              <div
+                key={item.id}
+                style={{
+                  padding: "8px 10px",
+                  background: "var(--surface)",
+                  borderRadius: "var(--radius)",
+                  border: "0.5px solid var(--border)",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: "8px"
+                }}
+              >
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: "12px", fontWeight: "500", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {item.title}
+                  </div>
+                  {details.role_or_award && (
+                    <div style={{ fontSize: "10px", color: "var(--accent)", marginTop: "2px", fontWeight: "500" }}>
+                      {details.role_or_award}
+                    </div>
+                  )}
+                  {item.proof_url && (
+                    <a
+                      href={item.proof_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: "10px", color: "var(--text-tertiary)", textDecoration: "underline", marginTop: "2px", display: "inline-block" }}
+                    >
+                      View Proof ↗
+                    </a>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onRemove(item.id)}
+                  title="Remove activity"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--text-tertiary)",
+                    fontSize: "11px",
+                    padding: "2px 4px"
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p style={{ fontSize: "11px", color: "var(--text-tertiary)", lineHeight: 1.4 }}>
+          {emptyText}
+        </p>
+      )}
+
+      <button
+        type="button"
+        onClick={onAdd}
+        style={{
+          width: "100%",
+          padding: "6px",
+          background: "transparent",
+          border: "0.5px dashed var(--border)",
+          borderRadius: "var(--radius)",
+          fontSize: "11px",
+          color: "var(--text-secondary)",
+          cursor: "pointer",
+          marginTop: "auto",
+          textAlign: "center"
+        }}
+      >
+        + Add {title}
+      </button>
     </div>
   );
 }
