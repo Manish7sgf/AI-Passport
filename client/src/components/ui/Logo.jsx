@@ -1,21 +1,20 @@
 import React from "react";
 
 /**
- * Sovereign Quantum Crest Logo (100% Faithful to Concept A Artwork)
- * - 3D Faceted Double-Beveled Security Shield with Corner & Apex Struts
- * - 4 Concentric Radar Arcs (2030 Skill Gap Radar)
- * - Microprocessor Core with 12 Pin Contacts & 8-Cell Silicon Grid
- * - Dual Swooping Wing Accents Cradling the Core
- * - 4 Converging Neural Topography Wave Layers at Base
+ * Concept A: Sovereign Quantum Crest
+ * - Isometric double-beveled gold security shield
+ * - Concentric 2030 Skill Radar wave arcs
+ * - Central AI neural microprocessor chip
+ * - Converging proof-of-work baseline chevrons
  */
-export function LogoIcon({ size = 34, className = "", style = {} }) {
-  const id = `sqc-${size}-${Math.random().toString(36).substr(2, 4)}`;
+export function LogoIcon({ size = 32, className = "", style = {} }) {
+  const idPrefix = `crest-${size}-${Math.random().toString(36).substr(2, 4)}`;
 
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 100 100"
+      viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
@@ -23,115 +22,125 @@ export function LogoIcon({ size = 34, className = "", style = {} }) {
         display: "inline-block",
         verticalAlign: "middle",
         flexShrink: 0,
-        filter: "drop-shadow(0 2px 10px rgba(245, 158, 11, 0.15))",
+        filter: "drop-shadow(0 2px 8px rgba(245, 158, 11, 0.12))",
         ...style
       }}
     >
       <defs>
-        {/* Luxurious Metallic Gold Gradient */}
-        <linearGradient id={`${id}-gold`} x1="15" y1="5" x2="85" y2="95" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FDE68A" />
-          <stop offset="25%" stopColor="#F59E0B" />
-          <stop offset="55%" stopColor="#D97706" />
-          <stop offset="80%" stopColor="#FBBF24" />
-          <stop offset="100%" stopColor="#B45309" />
+        {/* Outer Gold Gradient */}
+        <linearGradient id={`${idPrefix}-gold`} x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FCD34D" />
+          <stop offset="35%" stopColor="#F59E0B" />
+          <stop offset="70%" stopColor="#D97706" />
+          <stop offset="100%" stopColor="#78350F" />
         </linearGradient>
 
-        {/* Obsidian Dark Fill */}
-        <linearGradient id={`${id}-bg`} x1="50" y1="5" x2="50" y2="95" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#181715" />
-          <stop offset="100%" stopColor="#0B0A09" />
+        {/* Shield Obsidian Background */}
+        <linearGradient id={`${idPrefix}-bg`} x1="32" y1="6" x2="32" y2="58" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#1A1815" />
+          <stop offset="100%" stopColor="#0E0D0C" />
+        </linearGradient>
+
+        {/* Microchip Core Fill */}
+        <linearGradient id={`${idPrefix}-chip`} x1="22" y1="22" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#26231E" />
+          <stop offset="100%" stopColor="#141311" />
+        </linearGradient>
+
+        {/* Microchip Glow Border */}
+        <linearGradient id={`${idPrefix}-glow`} x1="20" y1="20" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FDE68A" />
+          <stop offset="100%" stopColor="#D97706" />
         </linearGradient>
       </defs>
 
       {/* 1. Outer Faceted Security Shield */}
       <path
-        d="M 50 7 L 82 18 L 82 39 C 82 59, 70 78, 50 93 C 30 78, 18 59, 18 39 L 18 18 Z"
-        fill={`url(#${id}-bg)`}
-        stroke={`url(#${id}-gold)`}
-        strokeWidth="2.6"
+        d="M32 4L54 12V30C54 44.5 44.5 56.5 32 60C19.5 56.5 10 44.5 10 30V12L32 4Z"
+        fill={`url(#${idPrefix}-bg)`}
+        stroke={`url(#${idPrefix}-gold)`}
+        strokeWidth="3"
         strokeLinejoin="round"
       />
 
-      {/* 2. Inner Chiseled Facet Edge */}
+      {/* 2. Chiseled Inner Holographic Edge */}
       <path
-        d="M 50 15 L 75 23 L 75 39 C 75 55, 65 71, 50 84 C 35 71, 25 55, 25 39 L 25 23 Z"
-        stroke={`url(#${id}-gold)`}
-        strokeWidth="1.6"
+        d="M32 9L49 15.5V29C49 41.5 41 51.8 32 55C23 51.8 15 41.5 15 29V15.5L32 9Z"
+        stroke={`url(#${idPrefix}-gold)`}
+        strokeWidth="1.2"
+        strokeOpacity="0.45"
         strokeLinejoin="round"
       />
 
-      {/* 3. 3D Bevel Facet Connecting Struts */}
-      <line x1="50" y1="7" x2="50" y2="15" stroke={`url(#${id}-gold)`} strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="82" y1="18" x2="75" y2="23" stroke={`url(#${id}-gold)`} strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="82" y1="39" x2="75" y2="39" stroke={`url(#${id}-gold)`} strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="72" y1="67" x2="66" y2="64" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="50" y1="93" x2="50" y2="84" stroke={`url(#${id}-gold)`} strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="28" y1="67" x2="34" y2="64" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="18" y1="39" x2="25" y2="39" stroke={`url(#${id}-gold)`} strokeWidth="1.8" strokeLinecap="round" />
-      <line x1="18" y1="18" x2="25" y2="23" stroke={`url(#${id}-gold)`} strokeWidth="1.8" strokeLinecap="round" />
+      {/* 3. Skill Radar Concentric Arc Waves */}
+      <path
+        d="M18 29C18 21.268 24.268 15 32 15C39.732 15 46 21.268 46 29"
+        stroke="#F59E0B"
+        strokeWidth="1.2"
+        strokeOpacity="0.35"
+        strokeLinecap="round"
+        strokeDasharray="2 3"
+      />
+      <path
+        d="M21.5 29C21.5 23.201 26.201 18.5 32 18.5C37.799 18.5 42.5 23.201 42.5 29"
+        stroke="#FCD34D"
+        strokeWidth="1.4"
+        strokeOpacity="0.65"
+        strokeLinecap="round"
+      />
+      <path
+        d="M25 29C25 25.134 28.134 22 32 22C35.866 22 39 25.134 39 29"
+        stroke="#FDE68A"
+        strokeWidth="1.5"
+        strokeOpacity="0.85"
+        strokeLinecap="round"
+      />
 
-      {/* 4. Concentric Radar Arc Waves (Upper Cavity) */}
-      <path d="M 28 44 A 22 22 0 0 1 72 44" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M 32 44 A 18 18 0 0 1 68 44" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M 36 44 A 14 14 0 0 1 64 44" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M 40 44 A 10 10 0 0 1 60 44" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
+      {/* 4. Central Microprocessor Core */}
+      {/* Chip Pins */}
+      <line x1="32" y1="21" x2="32" y2="25" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="28" y1="21" x2="28" y2="25" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="36" y1="21" x2="36" y2="25" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
 
-      {/* 5. Inner Swooping Wing Curves Cradling Core */}
-      <path d="M 25 28 C 25 48, 38 68, 50 78" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M 75 28 C 75 48, 62 68, 50 78" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M 25 34 C 26 52, 38 66, 50 73" stroke={`url(#${id}-gold)`} strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M 75 34 C 74 52, 62 66, 50 73" stroke={`url(#${id}-gold)`} strokeWidth="1.4" strokeLinecap="round" />
+      <line x1="32" y1="39" x2="32" y2="43" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="28" y1="39" x2="28" y2="43" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="36" y1="39" x2="36" y2="43" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
 
-      {/* 6. Central Microprocessor Core (Chip) */}
-      {/* Top Pins */}
-      <line x1="44" y1="39" x2="44" y2="34" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="48" y1="39" x2="48" y2="34" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="52" y1="39" x2="52" y2="34" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="56" y1="39" x2="56" y2="34" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
+      <line x1="21" y1="32" x2="25" y2="32" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="21" y1="28" x2="25" y2="28" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="21" y1="36" x2="25" y2="36" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
 
-      {/* Bottom Pins */}
-      <line x1="44" y1="57" x2="44" y2="62" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="48" y1="57" x2="48" y2="62" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="52" y1="57" x2="52" y2="62" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="56" y1="57" x2="56" y2="62" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-
-      {/* Left Pins */}
-      <line x1="41" y1="45" x2="36" y2="45" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="41" y1="51" x2="36" y2="51" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-
-      {/* Right Pins */}
-      <line x1="59" y1="45" x2="64" y2="45" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="59" y1="51" x2="64" y2="51" stroke={`url(#${id}-gold)`} strokeWidth="1.6" strokeLinecap="round" />
+      <line x1="39" y1="32" x2="43" y2="32" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="39" y1="28" x2="43" y2="28" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="39" y1="36" x2="43" y2="36" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
 
       {/* Chip Body */}
-      <rect x="41" y="39" width="18" height="18" rx="2.5" fill="#141311" stroke={`url(#${id}-gold)`} strokeWidth="1.8" />
+      <rect
+        x="24"
+        y="24"
+        width="16"
+        height="16"
+        rx="3"
+        fill={`url(#${idPrefix}-chip)`}
+        stroke={`url(#${idPrefix}-glow)`}
+        strokeWidth="1.6"
+      />
 
-      {/* 3x3 Silicon Matrix / Cells */}
-      <rect x="44.5" y="42.5" width="11" height="11" stroke={`url(#${id}-gold)`} strokeWidth="1.2" fill="none" />
-      <rect x="47.5" y="45.5" width="5" height="5" stroke={`url(#${id}-gold)`} strokeWidth="1.2" fill="none" />
-      <line x1="47.5" y1="42.5" x2="47.5" y2="45.5" stroke={`url(#${id}-gold)`} strokeWidth="1.2" />
-      <line x1="52.5" y1="42.5" x2="52.5" y2="45.5" stroke={`url(#${id}-gold)`} strokeWidth="1.2" />
-      <line x1="47.5" y1="50.5" x2="47.5" y2="53.5" stroke={`url(#${id}-gold)`} strokeWidth="1.2" />
-      <line x1="52.5" y1="50.5" x2="52.5" y2="53.5" stroke={`url(#${id}-gold)`} strokeWidth="1.2" />
-      <line x1="44.5" y1="45.5" x2="47.5" y2="45.5" stroke={`url(#${id}-gold)`} strokeWidth="1.2" />
-      <line x1="52.5" y1="45.5" x2="55.5" y2="45.5" stroke={`url(#${id}-gold)`} strokeWidth="1.2" />
-      <line x1="44.5" y1="50.5" x2="47.5" y2="50.5" stroke={`url(#${id}-gold)`} strokeWidth="1.2" />
-      <line x1="52.5" y1="50.5" x2="55.5" y2="50.5" stroke={`url(#${id}-gold)`} strokeWidth="1.2" />
+      {/* Silicon Logic Grid */}
+      <rect x="27.5" y="27.5" width="9" height="9" rx="1.5" stroke="#FCD34D" strokeWidth="1" strokeOpacity="0.8" fill="#1A1815" />
+      <circle cx="32" cy="32" r="1.6" fill="#FDE68A" />
 
-      {/* 7. Lower Converging Topography Waves */}
-      <path d="M 32 64 C 40 68, 58 63, 68 64" stroke={`url(#${id}-gold)`} strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M 34 69 C 42 73, 58 68, 66 70" stroke={`url(#${id}-gold)`} strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M 38 75 C 44 78, 56 74, 62 76" stroke={`url(#${id}-gold)`} strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M 43 80 C 47 82, 53 81, 57 82" stroke={`url(#${id}-gold)`} strokeWidth="1.5" strokeLinecap="round" />
+      {/* 5. Base Converging Proof-of-Work Lines */}
+      <path d="M22 47L32 52L42 47" stroke={`url(#${idPrefix}-gold)`} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M26 44L32 47L38 44" stroke={`url(#${idPrefix}-gold)`} strokeWidth="1" strokeOpacity="0.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
 export default function Logo({
-  size = 36,
+  size = 34,
   showText = true,
-  theme = "auto",
+  theme = "auto", // "auto" | "light" | "dark"
   className = "",
   style = {}
 }) {
@@ -145,7 +154,7 @@ export default function Logo({
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: size > 28 ? "12px" : "8px",
+        gap: size > 28 ? "11px" : "8px",
         userSelect: "none",
         ...style
       }}
@@ -156,7 +165,7 @@ export default function Logo({
           <span
             style={{
               fontFamily: "var(--font)",
-              fontSize: size > 32 ? "16.5px" : "14.5px",
+              fontSize: size > 32 ? "16px" : "14.5px",
               fontWeight: "600",
               color: textColor,
               letterSpacing: "-0.02em"
@@ -170,9 +179,9 @@ export default function Logo({
               fontSize: "8.5px",
               fontWeight: "500",
               color: subtextColor,
-              letterSpacing: "0.15em",
+              letterSpacing: "0.14em",
               textTransform: "uppercase",
-              marginTop: "2.5px"
+              marginTop: "2px"
             }}
           >
             Future Passport
