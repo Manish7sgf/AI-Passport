@@ -8,6 +8,7 @@ import PortfolioCard from "../components/portfolio/PortfolioCard";
 import ProfileCompletion from "../components/passport/ProfileCompletion";
 import ActivityModal from "../components/passport/ActivityModal";
 import Button from "../components/ui/Button";
+import { TrophyIcon, GitPullRequestIcon, UsersIcon, CertificateIcon, ExternalLinkIcon } from "../components/ui/Icons";
 import { getScoreColor, getScoreLabel, toPercent } from "../utils/scoreCalc";
 
 export default function Dashboard() {
@@ -154,7 +155,7 @@ export default function Dashboard() {
           {/* Hackathons */}
           <ActivityCategoryCard
             title="Hackathons"
-            icon="🏆"
+            icon={<TrophyIcon size={16} color="var(--accent)" />}
             count={hackathons.length || (passport?.hackathons ?? 0)}
             items={hackathons}
             onAdd={() => handleOpenModal("hackathon")}
@@ -166,7 +167,7 @@ export default function Dashboard() {
           {/* Open Source PRs */}
           <ActivityCategoryCard
             title="Open Source PRs"
-            icon="🐙"
+            icon={<GitPullRequestIcon size={16} color="var(--accent)" />}
             count={openSourcePrs.length || (passport?.open_source_prs ?? 0)}
             items={openSourcePrs}
             onAdd={() => handleOpenModal("open_source_pr")}
@@ -178,7 +179,7 @@ export default function Dashboard() {
           {/* Mentoring Sessions */}
           <ActivityCategoryCard
             title="Mentoring & Leadership"
-            icon="👥"
+            icon={<UsersIcon size={16} color="var(--accent)" />}
             count={mentoring.length || (passport?.mentoring_sessions ?? 0)}
             items={mentoring}
             onAdd={() => handleOpenModal("mentoring")}
@@ -332,7 +333,7 @@ function ActivityCategoryCard({ title, icon, count, items = [], onAdd, onRemove,
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "16px" }}>{icon}</span>
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
           <span style={{ fontSize: "11px", color: "var(--text-secondary)", fontFamily: "var(--font)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             {title}
           </span>
@@ -388,18 +389,19 @@ function ActivityCategoryCard({ title, icon, count, items = [], onAdd, onRemove,
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: "4px",
+                          gap: "5px",
                           background: "rgba(16, 185, 129, 0.12)",
                           border: "0.5px solid var(--accent)",
                           borderRadius: "4px",
-                          padding: "2px 6px",
+                          padding: "2px 8px",
                           fontSize: "10px",
                           color: "var(--accent)",
                           cursor: "pointer",
                           fontFamily: "var(--font)"
                         }}
                       >
-                        📜 Certificate Photo
+                        <CertificateIcon size={12} color="var(--accent)" />
+                        Certificate Photo
                       </button>
                     )}
                     {item.proof_url && !item.proof_url.startsWith("data:") && (
@@ -407,9 +409,17 @@ function ActivityCategoryCard({ title, icon, count, items = [], onAdd, onRemove,
                         href={item.proof_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ fontSize: "10px", color: "var(--text-tertiary)", textDecoration: "underline" }}
+                        style={{
+                          fontSize: "10px",
+                          color: "var(--text-tertiary)",
+                          textDecoration: "underline",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px"
+                        }}
                       >
-                        View Proof ↗
+                        View Proof
+                        <ExternalLinkIcon size={10} color="var(--text-tertiary)" />
                       </a>
                     )}
                   </div>

@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Spinner from "../ui/Spinner";
+import { TrophyIcon, GitPullRequestIcon, UsersIcon, ImageIcon, CheckIcon } from "../ui/Icons";
 
 const ACTIVITY_TYPES = [
-  { id: "hackathon", label: "Hackathon", icon: "🏆", desc: "Competitions, hackathons, and project showcases" },
-  { id: "open_source_pr", label: "Open Source PR", icon: "🐙", desc: "Merged or submitted pull requests to open source repos" },
-  { id: "mentoring", label: "Mentoring & Leadership", icon: "👥", desc: "Workshops, student mentoring, or community leadership" }
+  { id: "hackathon", label: "Hackathon", icon: TrophyIcon, desc: "Competitions, hackathons, and project showcases" },
+  { id: "open_source_pr", label: "Open Source PR", icon: GitPullRequestIcon, desc: "Merged or submitted pull requests to open source repos" },
+  { id: "mentoring", label: "Mentoring & Leadership", icon: UsersIcon, desc: "Workshops, student mentoring, or community leadership" }
 ];
 
 const GITHUB_PR_REGEX = /^https:\/\/github\.com\/([\w\-]+)\/([\w.\-]+)\/pull\/(\d+)\/?$/;
@@ -156,6 +157,7 @@ export default function ActivityModal({ isOpen, onClose, onAdd, defaultType = "h
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "20px" }}>
           {ACTIVITY_TYPES.map((t) => {
             const isSelected = activeType === t.id;
+            const IconComp = t.icon;
             return (
               <button
                 key={t.id}
@@ -172,11 +174,13 @@ export default function ActivityModal({ isOpen, onClose, onAdd, defaultType = "h
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: "4px",
+                  gap: "6px",
                   transition: "all 0.15s ease"
                 }}
               >
-                <span style={{ fontSize: "18px" }}>{t.icon}</span>
+                <span style={{ display: "inline-flex", alignItems: "center" }}>
+                  <IconComp size={18} color={isSelected ? "var(--accent)" : "var(--text-secondary)"} />
+                </span>
                 <span style={{ fontFamily: "var(--font)", fontSize: "11px", fontWeight: isSelected ? "600" : "400" }}>
                   {t.label}
                 </span>
@@ -231,7 +235,8 @@ export default function ActivityModal({ isOpen, onClose, onAdd, defaultType = "h
                     gap: "6px"
                   }}
                 >
-                  <span>📷 Choose Certificate Image</span>
+                  <ImageIcon size={14} color="var(--text-secondary)" />
+                  <span>Choose Certificate Image</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -240,8 +245,8 @@ export default function ActivityModal({ isOpen, onClose, onAdd, defaultType = "h
                   />
                 </label>
                 {certificateImage && (
-                  <span style={{ fontSize: "11px", color: "var(--green)" }}>
-                    ✓ Image attached
+                  <span style={{ fontSize: "11px", color: "var(--green)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <CheckIcon size={12} color="var(--green)" /> Image attached
                   </span>
                 )}
               </div>

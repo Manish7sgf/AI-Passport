@@ -3,6 +3,7 @@ import useAuthStore from "../store/authStore";
 import useUserStore from "../store/userStore";
 import { getInitials, formatDate } from "../utils/formatters";
 import ScoreRing from "../components/passport/ScoreRing";
+import { TrophyIcon, GitPullRequestIcon, UsersIcon, CertificateIcon, ExternalLinkIcon } from "../components/ui/Icons";
 
 export default function Profile() {
   const { user } = useAuthStore();
@@ -123,7 +124,7 @@ export default function Profile() {
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {activities.map((a) => {
               const details = typeof a.details === "string" ? JSON.parse(a.details || "{}") : a.details || {};
-              const typeIcon = a.activity_type === "hackathon" ? "🏆" : a.activity_type === "open_source_pr" ? "🐙" : "👥";
+              const typeIcon = a.activity_type === "hackathon" ? <TrophyIcon size={18} color="var(--accent)" /> : a.activity_type === "open_source_pr" ? <GitPullRequestIcon size={18} color="var(--accent)" /> : <UsersIcon size={18} color="var(--accent)" />;
               const typeLabel = a.activity_type === "hackathon" ? "Hackathon" : a.activity_type === "open_source_pr" ? "Open Source PR" : "Mentoring";
               const hasImage = details.certificate_image || a.proof_url?.startsWith("data:image");
 
@@ -143,7 +144,7 @@ export default function Profile() {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: "200px" }}>
-                    <span style={{ fontSize: "18px" }}>{typeIcon}</span>
+                    <span style={{ display: "inline-flex", alignItems: "center" }}>{typeIcon}</span>
                     <div>
                       <div style={{ fontSize: "13px", fontWeight: "500" }}>{a.title}</div>
                       <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "2px" }}>
@@ -172,10 +173,11 @@ export default function Profile() {
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: "4px"
+                          gap: "5px"
                         }}
                       >
-                        📜 View Certificate Photo
+                        <CertificateIcon size={12} color="var(--accent)" />
+                        Certificate Photo
                       </button>
                     )}
                     {a.proof_url && !a.proof_url.startsWith("data:") && (
@@ -191,10 +193,14 @@ export default function Profile() {
                           border: "0.5px solid var(--border)",
                           borderRadius: "var(--radius)",
                           padding: "4px 10px",
-                          textDecoration: "none"
+                          textDecoration: "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px"
                         }}
                       >
-                        View Proof ↗
+                        View Proof
+                        <ExternalLinkIcon size={10} color="var(--text-secondary)" />
                       </a>
                     )}
                   </div>
