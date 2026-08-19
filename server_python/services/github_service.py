@@ -227,9 +227,11 @@ def sync_user_repos(github_username: str, user_token: str | None = None) -> list
 
 
 def extract_skills_from_repos(repos: list[dict]) -> list[str]:
-    """Return languages sorted by frequency across repos."""
+    """Return languages/frameworks sorted by frequency across repos, filtering out non-skill files."""
+    excluded = {"batchfile", "procfile", "makefile", "unknown", "null", "none", "cmake", "roff"}
     freq: Counter = Counter()
     for repo in repos:
         for lang in repo.get("tech_stack", []):
-            freq[lang] += 1
+            if lang and str(lang).strip().lower() not in excluded:
+                freq[str(lang).strip()] += 1
     return [lang for lang, _ in freq.most_common()]
