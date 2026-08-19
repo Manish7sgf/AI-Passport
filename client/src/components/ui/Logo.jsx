@@ -1,94 +1,152 @@
 import React from "react";
 
+/**
+ * Concept A: Sovereign Quantum Crest
+ * - Isometric double-beveled gold security shield
+ * - Concentric 2030 Skill Radar wave arcs
+ * - Central AI neural microprocessor chip
+ * - Converging proof-of-work baseline chevrons
+ */
 export function LogoIcon({ size = 32, className = "", style = {} }) {
+  const idPrefix = `crest-${size}-${Math.random().toString(36).substr(2, 4)}`;
+
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 48 48"
+      viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0, ...style }}
+      style={{
+        display: "inline-block",
+        verticalAlign: "middle",
+        flexShrink: 0,
+        filter: "drop-shadow(0 2px 8px rgba(245, 158, 11, 0.12))",
+        ...style
+      }}
     >
       <defs>
-        <linearGradient id={`shieldGrad-${size}`} x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#F5B738" />
-          <stop offset="50%" stopColor="#E08E1A" />
-          <stop offset="100%" stopColor="#8C4E03" />
+        {/* Outer Gold Gradient */}
+        <linearGradient id={`${idPrefix}-gold`} x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FCD34D" />
+          <stop offset="35%" stopColor="#F59E0B" />
+          <stop offset="70%" stopColor="#D97706" />
+          <stop offset="100%" stopColor="#78350F" />
         </linearGradient>
-        <linearGradient id={`chipGrad-${size}`} x1="14" y1="14" x2="34" y2="34" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#1C1A17" />
-          <stop offset="100%" stopColor="#2A2621" />
+
+        {/* Shield Obsidian Background */}
+        <linearGradient id={`${idPrefix}-bg`} x1="32" y1="6" x2="32" y2="58" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#1A1815" />
+          <stop offset="100%" stopColor="#0E0D0C" />
         </linearGradient>
-        <linearGradient id={`neonGlow-${size}`} x1="16" y1="16" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+
+        {/* Microchip Core Fill */}
+        <linearGradient id={`${idPrefix}-chip`} x1="22" y1="22" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#26231E" />
+          <stop offset="100%" stopColor="#141311" />
+        </linearGradient>
+
+        {/* Microchip Glow Border */}
+        <linearGradient id={`${idPrefix}-glow`} x1="20" y1="20" x2="44" y2="44" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#FDE68A" />
-          <stop offset="100%" stopColor="#F59E0B" />
+          <stop offset="100%" stopColor="#D97706" />
         </linearGradient>
       </defs>
 
-      {/* Main Biometric Shield */}
+      {/* 1. Outer Faceted Security Shield */}
       <path
-        d="M24 4L39 9.5V22C39 31.8 32.6 40.8 24 44C15.4 40.8 9 31.8 9 22V9.5L24 4Z"
-        fill="#141311"
-        stroke={`url(#shieldGrad-${size})`}
-        strokeWidth="2.2"
+        d="M32 4L54 12V30C54 44.5 44.5 56.5 32 60C19.5 56.5 10 44.5 10 30V12L32 4Z"
+        fill={`url(#${idPrefix}-bg)`}
+        stroke={`url(#${idPrefix}-gold)`}
+        strokeWidth="3"
         strokeLinejoin="round"
       />
 
-      {/* Hologram Inner Border */}
+      {/* 2. Chiseled Inner Holographic Edge */}
       <path
-        d="M24 8.5L35.5 12.8V22C35.5 29.8 30.5 37 24 39.8C17.5 37 12.5 29.8 12.5 22V12.8L24 8.5Z"
-        stroke="#F5B738"
-        strokeOpacity="0.4"
-        strokeWidth="1"
+        d="M32 9L49 15.5V29C49 41.5 41 51.8 32 55C23 51.8 15 41.5 15 29V15.5L32 9Z"
+        stroke={`url(#${idPrefix}-gold)`}
+        strokeWidth="1.2"
+        strokeOpacity="0.45"
         strokeLinejoin="round"
-        strokeDasharray="2 2"
       />
 
-      {/* Center Passport Neural Chip */}
-      <rect
-        x="18"
-        y="18"
-        width="12"
-        height="12"
-        rx="2.5"
-        fill={`url(#chipGrad-${size})`}
-        stroke={`url(#neonGlow-${size})`}
+      {/* 3. Skill Radar Concentric Arc Waves */}
+      <path
+        d="M18 29C18 21.268 24.268 15 32 15C39.732 15 46 21.268 46 29"
+        stroke="#F59E0B"
+        strokeWidth="1.2"
+        strokeOpacity="0.35"
+        strokeLinecap="round"
+        strokeDasharray="2 3"
+      />
+      <path
+        d="M21.5 29C21.5 23.201 26.201 18.5 32 18.5C37.799 18.5 42.5 23.201 42.5 29"
+        stroke="#FCD34D"
+        strokeWidth="1.4"
+        strokeOpacity="0.65"
+        strokeLinecap="round"
+      />
+      <path
+        d="M25 29C25 25.134 28.134 22 32 22C35.866 22 39 25.134 39 29"
+        stroke="#FDE68A"
         strokeWidth="1.5"
+        strokeOpacity="0.85"
+        strokeLinecap="round"
       />
 
-      {/* Neural Hub Center Node */}
-      <circle cx="24" cy="24" r="2" fill="#FDE68A" />
-      <line x1="24" y1="18" x2="24" y2="22" stroke="#FDE68A" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="24" y1="26" x2="24" y2="30" stroke="#FDE68A" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="18" y1="24" x2="22" y2="24" stroke="#FDE68A" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="26" y1="24" x2="30" y2="24" stroke="#FDE68A" strokeWidth="1.2" strokeLinecap="round" />
+      {/* 4. Central Microprocessor Core */}
+      {/* Chip Pins */}
+      <line x1="32" y1="21" x2="32" y2="25" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="28" y1="21" x2="28" y2="25" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="36" y1="21" x2="36" y2="25" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
 
-      {/* Upper Neural Nodes */}
-      <circle cx="24" cy="13" r="1.5" fill="#FDE68A" />
-      <circle cx="18" cy="15" r="1.2" fill="#F5B738" />
-      <circle cx="30" cy="15" r="1.2" fill="#F5B738" />
-      <line x1="18" y1="15" x2="24" y2="13" stroke="#F5B738" strokeWidth="1" strokeOpacity="0.8" />
-      <line x1="30" y1="15" x2="24" y2="13" stroke="#F5B738" strokeWidth="1" strokeOpacity="0.8" />
-      <line x1="24" y1="13" x2="24" y2="18" stroke="#F5B738" strokeWidth="1" strokeOpacity="0.8" />
+      <line x1="32" y1="39" x2="32" y2="43" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="28" y1="39" x2="28" y2="43" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="36" y1="39" x2="36" y2="43" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
 
-      {/* Base Biometric Arcs */}
-      <path d="M21 34C21 32.5 22.3 31.5 24 31.5C25.7 31.5 27 32.5 27 34" stroke="#FDE68A" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M19 36C19 33.5 21.2 32.5 24 32.5C26.8 32.5 29 33.5 29 36" stroke="#FDE68A" strokeOpacity="0.5" strokeWidth="1" strokeLinecap="round" />
+      <line x1="21" y1="32" x2="25" y2="32" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="21" y1="28" x2="25" y2="28" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="21" y1="36" x2="25" y2="36" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+
+      <line x1="39" y1="32" x2="43" y2="32" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="39" y1="28" x2="43" y2="28" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="39" y1="36" x2="43" y2="36" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* Chip Body */}
+      <rect
+        x="24"
+        y="24"
+        width="16"
+        height="16"
+        rx="3"
+        fill={`url(#${idPrefix}-chip)`}
+        stroke={`url(#${idPrefix}-glow)`}
+        strokeWidth="1.6"
+      />
+
+      {/* Silicon Logic Grid */}
+      <rect x="27.5" y="27.5" width="9" height="9" rx="1.5" stroke="#FCD34D" strokeWidth="1" strokeOpacity="0.8" fill="#1A1815" />
+      <circle cx="32" cy="32" r="1.6" fill="#FDE68A" />
+
+      {/* 5. Base Converging Proof-of-Work Lines */}
+      <path d="M22 47L32 52L42 47" stroke={`url(#${idPrefix}-gold)`} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M26 44L32 47L38 44" stroke={`url(#${idPrefix}-gold)`} strokeWidth="1" strokeOpacity="0.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
 export default function Logo({
-  size = 32,
+  size = 34,
   showText = true,
   theme = "auto", // "auto" | "light" | "dark"
   className = "",
   style = {}
 }) {
-  const textColor = theme === "dark" ? "var(--accent-text)" : "var(--text-primary)";
-  const subtextColor = theme === "dark" ? "rgba(245,244,240,0.5)" : "var(--text-tertiary)";
+  const isDark = theme === "dark";
+  const textColor = isDark ? "var(--accent-text)" : "var(--text-primary)";
+  const subtextColor = isDark ? "rgba(245,244,240,0.6)" : "var(--text-tertiary)";
 
   return (
     <div
@@ -96,18 +154,18 @@ export default function Logo({
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: size > 28 ? "10px" : "8px",
+        gap: size > 28 ? "11px" : "8px",
         userSelect: "none",
         ...style
       }}
     >
       <LogoIcon size={size} />
       {showText && (
-        <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
+        <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.05 }}>
           <span
             style={{
               fontFamily: "var(--font)",
-              fontSize: size > 32 ? "18px" : "15px",
+              fontSize: size > 32 ? "16px" : "14.5px",
               fontWeight: "600",
               color: textColor,
               letterSpacing: "-0.02em"
@@ -118,7 +176,7 @@ export default function Logo({
           <span
             style={{
               fontFamily: "var(--font)",
-              fontSize: "9px",
+              fontSize: "8.5px",
               fontWeight: "500",
               color: subtextColor,
               letterSpacing: "0.14em",
