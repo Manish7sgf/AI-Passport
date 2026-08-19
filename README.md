@@ -49,7 +49,7 @@ Traditional hiring relies on **unverified resumes** and static LinkedIn claims t
 |---|---|
 | **Resume Inflation & Keyword Stuffing** | **AI Code Verification**: Repositories are crawled and evaluated with Nvidia AI for architecture, code depth, and polyglot balance. |
 | **Arbitrary Metric Steppers (Fake Proof)** | **Proof-Backed Credential System**: Hackathons require Devpost/Certificates; PRs require valid GitHub pull request links. |
-| **Uncertainty About the AI Future (2025–2040)** | **Career Time Machine**: Forecasts how LLMs, automation, and quantum systems will transform job roles by 2040. |
+| **Uncertainty About the AI Future (2025–2040)** | **Career Time Machine**: Forecasts how emerging AI technologies and software automation will transform job roles between 2025 and 2040. |
 | **Blind Skill Acquisition** | **Skill Gap Radar**: Pinpoints exact missing competencies and assigns 2030 relevance scores (0–100). |
 | **Disconnected Tooling & Fragmented Profiles** | **All-in-One Living Dashboard**: Syncs GitHub, tracks live employability score, and updates passport in real-time. |
 
@@ -94,7 +94,7 @@ Traditional hiring relies on **unverified resumes** and static LinkedIn claims t
 - Provides interactive `+ Add Verified Proof` modal and clickable `View Proof ↗` links.
 
 ### 2. Career Time Machine (2025–2040)
-- Simulates how artificial intelligence, autonomous agents, and quantum computing will reshape industry roles.
+- Simulates how artificial intelligence, cloud architectures, and modern software engineering will reshape industry roles.
 - Generates 4 tailored futuristic job roles (e.g. *Autonomous AI Agent Architect*, *AI Ethics & Governance Specialist*).
 - Calculates a **Role Fit Score** and an overall **Career Readiness Index**.
 
