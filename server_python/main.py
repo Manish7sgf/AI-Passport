@@ -126,6 +126,6 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 5000))
     is_prod = os.getenv("NODE_ENV") == "production"
-    base = "https://ai-passport.onrender.com" if is_prod else f"http://localhost:{port}"
+    base = os.getenv("RENDER_EXTERNAL_URL", "https://ai-passport-1.onrender.com") if is_prod else f"http://localhost:{port}"
     print(f"🚀 AI Future Passport (Python) running on {base}")
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=not is_prod)
