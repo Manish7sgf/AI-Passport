@@ -1,5 +1,5 @@
 import React, { useEffect, useState, createContext, useContext, useCallback } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useNavigate } from "react-router-dom";
 import useAuthStore from "./store/authStore";
 import Layout from "./components/layout/Layout";
 import Auth from "./pages/Auth";
@@ -55,17 +55,44 @@ function ToastContainer({ toasts, removeToast }) {
 function AuthCallback() {
   const [searchParams] = useSearchParams();
   const { setToken, fetchMe } = useAuthStore();
+  const navigate = useNavigate();
   const token = searchParams.get("token");
 
   useEffect(() => {
-    if (token) {
-      setToken(token);
-      fetchMe(); // populate user immediately after OAuth
+    async function completeAuth() {
+      if (token) {
+        setToken(token);
+        await fetchMe();
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/auth?error=github_failed", { replace: true });
+      }
     }
+    completeAuth();
   }, [token]);
 
-  if (token) return <Navigate to="/dashboard" replace />;
-  return <Navigate to="/auth?error=github_failed" replace />;
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "var(--bg)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        gap: "12px"
+      }}
+    >
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ animation: "spin 0.8s linear infinite" }}>
+        <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+        <circle cx="12" cy="12" r="10" stroke="var(--border-strong)" strokeWidth="2" />
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="var(--text-primary)" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+      <span style={{ fontFamily: "var(--font)", fontSize: "13px", color: "var(--text-secondary)" }}>
+        Syncing your GitHub profile & passport...
+      </span>
+    </div>
+  );
 }
 
 // ── Protected route — waits for initialisation before deciding ────────────────

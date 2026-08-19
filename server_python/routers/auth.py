@@ -177,12 +177,56 @@ def github_callback(code: str | None = None):
         return RedirectResponse(f"{frontend}/auth?error=db_error")
 
     _create_passport_if_missing(str(user["id"]))
+
+    # Auto-sync repositories & skills on GitHub login
+    try:
+        from services import github_service
+        from services.score_service import calculate_score
+
+        synced_repos = github_service.sync_user_repos(profile["login"], access_token)
+        for repo in synced_repos:
+            execute(
+                """INSERT INTO portfolio_items
+                     (user_id, repo_url, title, description, tech_stack, ai_summary,
+                      contribution_level, verified, source)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                   ON CONFLICT DO NOTHING""",
+                (
+                    str(user["id"]),
+                    repo["repo_url"],
+                    repo["title"],
+                    repo["description"],
+                    json.dumps(repo["tech_stack"]),
+                    json.dumps(repo["github_data"]),
+                    repo["contribution_level"],
+                    False,
+                    "github_sync",
+                ),
+            )
+
+        detected_skills = github_service.extract_skills_from_repos(synced_repos)
+        if detected_skills:
+            execute(
+                "UPDATE passports SET skills = %s, last_updated = NOW() WHERE user_id = %s",
+                (json.dumps(detected_skills), str(user["id"])),
+            )
+
+        calculate_score(str(user["id"]))
+    except Exception as sync_err:
+        print(f"GitHub OAuth auto-sync note: {sync_err}")
+
     token = _sign_token(str(user["id"]))
     return RedirectResponse(f"{frontend}/auth/callback?token={token}")
 
 
 @router.get("/me")
 def me(current_user: dict = Depends(verify_token)):
-    return {"success": True, "data": {"user": {k: str(v) if hasattr(v, 'hex') else v
-                                                for k, v in current_user.items()
-                                                if k != "github_token"}}}
+    user_data = {
+        "id": str(current_user["id"]),
+        "email": current_user.get("email"),
+        "name": current_user.get("name") or "Student",
+        "github_username": current_user.get("github_username"),
+        "avatar_url": current_user.get("avatar_url"),
+        "created_at": str(current_user.get("created_at") or ""),
+    }
+    return {"success": True, "data": {"user": user_data}}
