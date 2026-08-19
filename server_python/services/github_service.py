@@ -11,24 +11,22 @@ import httpx
 from fastapi import HTTPException
 
 
-def _server_headers() -> dict:
-    return {
-        "Authorization": f"token {os.environ['GITHUB_TOKEN']}",
+def _get_headers(user_token: str | None = None) -> dict:
+    headers = {
         "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "AI-Future-Passport",
     }
-
-
-def _user_headers(token: str) -> dict:
-    return {
-        "Authorization": f"token {token}",
-        "Accept": "application/vnd.github.v3+json",
-    }
+    token = user_token or os.environ.get("GITHUB_TOKEN")
+    if token and token not in ("demo", "your_personal_github_token", ""):
+        auth_type = "Bearer" if token.startswith("github_pat_") else "token"
+        headers["Authorization"] = f"{auth_type} {token}"
+    return headers
 
 
 def _check_rate_limit(response: httpx.Response) -> None:
     remaining = response.headers.get("X-RateLimit-Remaining")
     if remaining is not None and int(remaining) == 0:
-        raise HTTPException(status_code=429, detail="GitHub API limit reached, try in 1 hour")
+        raise HTTPException(status_code=429, detail="GitHub API limit reached, please try again later")
 
 
 def _derive_contribution_level(repo: dict) -> str:
@@ -44,23 +42,29 @@ def _derive_contribution_level(repo: dict) -> str:
     return "low"
 
 
-def fetch_repo_data(owner: str, repo: str) -> dict:
-    """Fetch repo metadata, languages, and README in parallel."""
-    headers = _server_headers()
+def fetch_repo_data(owner: str, repo: str, user_token: str | None = None) -> dict:
+    """Fetch repo metadata, languages, and README with automatic auth fallback."""
+    headers = _get_headers(user_token)
 
-    with httpx.Client(timeout=20) as client:
-        repo_res  = client.get(f"https://api.github.com/repos/{owner}/{repo}", headers=headers)
-        lang_res  = client.get(f"https://api.github.com/repos/{owner}/{repo}/languages", headers=headers)
+    with httpx.Client(timeout=25) as client:
+        repo_res = client.get(f"https://api.github.com/repos/{owner}/{repo}", headers=headers)
+
+        # If token was invalid/expired (401), retry without auth header (public access)
+        if repo_res.status_code == 401 and "Authorization" in headers:
+            headers = {"Accept": "application/vnd.github.v3+json", "User-Agent": "AI-Future-Passport"}
+            repo_res = client.get(f"https://api.github.com/repos/{owner}/{repo}", headers=headers)
+
+        lang_res = client.get(f"https://api.github.com/repos/{owner}/{repo}/languages", headers=headers)
         readme_res = client.get(f"https://api.github.com/repos/{owner}/{repo}/readme", headers=headers)
 
     _check_rate_limit(repo_res)
 
     if repo_res.status_code == 404:
-        raise HTTPException(status_code=400, detail="Repository not accessible. Make sure it is public.")
+        raise HTTPException(status_code=400, detail="Repository not found or private. Make sure it is public.")
     if repo_res.status_code in (403, 429):
-        raise HTTPException(status_code=429, detail="GitHub API limit reached, try in 1 hour")
+        raise HTTPException(status_code=429, detail="GitHub API limit reached, please try again in a few minutes")
     if not repo_res.is_success:
-        raise HTTPException(status_code=400, detail="Failed to fetch repository data")
+        raise HTTPException(status_code=400, detail=f"Failed to fetch repository: {repo_res.status_code}")
 
     repo_data = repo_res.json()
     languages = lang_res.json() if lang_res.is_success else {}
@@ -78,26 +82,32 @@ def fetch_repo_data(owner: str, repo: str) -> dict:
 
 def sync_user_repos(github_username: str, user_token: str | None = None) -> list[dict]:
     """Fetch up to 30 public repos, enrich with languages, return structured list."""
-    headers = _user_headers(user_token) if user_token else _server_headers()
+    headers = _get_headers(user_token)
 
-    with httpx.Client(timeout=20) as client:
+    with httpx.Client(timeout=25) as client:
         res = client.get(
             f"https://api.github.com/users/{github_username}/repos",
             params={"sort": "pushed", "per_page": 30, "type": "public"},
             headers=headers,
         )
+        if res.status_code == 401 and "Authorization" in headers:
+            headers = {"Accept": "application/vnd.github.v3+json", "User-Agent": "AI-Future-Passport"}
+            res = client.get(
+                f"https://api.github.com/users/{github_username}/repos",
+                params={"sort": "pushed", "per_page": 30, "type": "public"},
+                headers=headers,
+            )
 
     _check_rate_limit(res)
 
     if res.status_code == 404:
         return []
     if res.status_code in (403, 429):
-        raise HTTPException(status_code=429, detail="GitHub API limit reached, try in 1 hour")
+        raise HTTPException(status_code=429, detail="GitHub API limit reached, please try again later")
     if not res.is_success:
         return []
 
     repos = res.json()
-    # Filter forks and empty repos
     own_repos = [r for r in repos if not r.get("fork") and r.get("size", 0) > 0 and r.get("language")]
     top_repos = own_repos[:10]
 
