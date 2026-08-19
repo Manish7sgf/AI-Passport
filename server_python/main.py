@@ -60,6 +60,10 @@ app.add_middleware(
 
 @app.exception_handler(Exception)
 async def global_error_handler(request: Request, exc: Exception):
+    import traceback
+    print(f"❌ [UNHANDLED ERROR] {request.method} {request.url}: {exc}")
+    traceback.print_exc()
+
     # psycopg2 unique violation
     if hasattr(exc, "pgcode"):
         if exc.pgcode == "23505":
@@ -69,7 +73,7 @@ async def global_error_handler(request: Request, exc: Exception):
             )
         return JSONResponse(
             status_code=503,
-            content={"success": False, "error": "Database error, please try again", "code": "DB_ERROR"},
+            content={"success": False, "error": f"Database error: {exc}", "code": "DB_ERROR"},
         )
     status_code = getattr(exc, "status_code", 500)
     detail = getattr(exc, "detail", str(exc)) or "Internal server error"

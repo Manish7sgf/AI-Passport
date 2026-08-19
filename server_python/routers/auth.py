@@ -161,9 +161,12 @@ def github_callback(code: str | None = None):
         primary = next((e for e in emails if e.get("primary") and e.get("verified")), None)
         email = primary["email"] if primary else f"{profile['login']}@github.local"
 
-    # Find existing user by github_username OR email to always preserve user data
+    # Find existing user by github_username OR email (case-insensitive)
     existing_user = fetch_one(
-        "SELECT id, email, name, github_username FROM users WHERE github_username = %s OR email = %s",
+        """SELECT id, email, name, github_username FROM users
+           WHERE LOWER(github_username) = LOWER(%s)
+              OR LOWER(email) = LOWER(%s)
+           LIMIT 1""",
         (profile["login"], email),
     )
 
@@ -172,7 +175,7 @@ def github_callback(code: str | None = None):
             """UPDATE users SET
                  github_username = %s,
                  github_token = %s,
-                 avatar_url = %s,
+                 avatar_url = COALESCE(%s, avatar_url),
                  name = COALESCE(NULLIF(%s, ''), name)
                WHERE id = %s
                RETURNING id, email, name, github_username, avatar_url""",
@@ -188,6 +191,11 @@ def github_callback(code: str | None = None):
         user = execute(
             """INSERT INTO users (email, name, github_username, github_token, avatar_url)
                VALUES (%s, %s, %s, %s, %s)
+               ON CONFLICT (email) DO UPDATE SET
+                 github_username = EXCLUDED.github_username,
+                 github_token    = EXCLUDED.github_token,
+                 avatar_url      = COALESCE(EXCLUDED.avatar_url, users.avatar_url),
+                 name            = COALESCE(NULLIF(EXCLUDED.name, ''), users.name)
                RETURNING id, email, name, github_username, avatar_url""",
             (
                 email,
@@ -203,31 +211,36 @@ def github_callback(code: str | None = None):
 
     _create_passport_if_missing(str(user["id"]))
 
-    # Auto-sync repositories & skills on GitHub login
+    # Auto-sync repositories & skills on GitHub login safely
     try:
         from services import github_service
         from services.score_service import calculate_score
 
         synced_repos = github_service.sync_user_repos(profile["login"], access_token)
         for repo in synced_repos:
-            execute(
-                """INSERT INTO portfolio_items
-                     (user_id, repo_url, title, description, tech_stack, ai_summary,
-                      contribution_level, verified, source)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                   ON CONFLICT DO NOTHING""",
-                (
-                    str(user["id"]),
-                    repo["repo_url"],
-                    repo["title"],
-                    repo["description"],
-                    json.dumps(repo["tech_stack"]),
-                    json.dumps(repo["github_data"]),
-                    repo["contribution_level"],
-                    False,
-                    "github_sync",
-                ),
+            # Avoid inserting duplicate repo URLs for this user
+            existing_repo = fetch_one(
+                "SELECT id FROM portfolio_items WHERE user_id = %s AND repo_url = %s",
+                (str(user["id"]), repo["repo_url"]),
             )
+            if not existing_repo:
+                execute(
+                    """INSERT INTO portfolio_items
+                         (user_id, repo_url, title, description, tech_stack, ai_summary,
+                          contribution_level, verified, source)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (
+                        str(user["id"]),
+                        repo["repo_url"],
+                        repo["title"],
+                        repo["description"],
+                        json.dumps(repo["tech_stack"]),
+                        json.dumps(repo["github_data"]),
+                        repo["contribution_level"],
+                        False,
+                        "github_sync",
+                    ),
+                )
 
         detected_skills = github_service.extract_skills_from_repos(synced_repos)
         if detected_skills:
