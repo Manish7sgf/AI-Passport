@@ -31,7 +31,15 @@ def public_passport(username: str):
                   verified, repo_url, created_at
            FROM portfolio_items
            WHERE user_id = %s AND verified = true
-           ORDER BY created_at DESC LIMIT 6""",
+           ORDER BY created_at DESC""",
+        (str(user["id"]),),
+    )
+
+    activities = fetch_all(
+        """SELECT id, activity_type, title, proof_url, details, verified, created_at
+           FROM verified_activities
+           WHERE user_id = %s AND verified = true
+           ORDER BY created_at DESC""",
         (str(user["id"]),),
     )
 
@@ -43,7 +51,8 @@ def public_passport(username: str):
                 "github_username": user["github_username"],
                 "avatar_url":      user["avatar_url"],
             },
-            "passport":  passport,
-            "portfolio": portfolio,
+            "passport":   passport,
+            "portfolio":  portfolio,
+            "activities": activities,
         },
     }

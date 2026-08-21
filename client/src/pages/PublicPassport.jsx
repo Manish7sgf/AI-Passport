@@ -4,14 +4,16 @@ import api from "../api";
 import ScoreRing from "../components/passport/ScoreRing";
 import BadgeGrid from "../components/passport/BadgeGrid";
 import Logo from "../components/ui/Logo";
+import { TrophyIcon, GitPullRequestIcon, UsersIcon, CertificateIcon, ExternalLinkIcon } from "../components/ui/Icons";
 import { getScoreLabel, getScoreColor, toPercent } from "../utils/scoreCalc";
 import { formatDate, getInitials } from "../utils/formatters";
 
 export default function PublicPassport() {
   const { username } = useParams();
-  const [data, setData]     = useState(null);
+  const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState(null);
+  const [error, setError]     = useState(null);
+  const [viewingCert, setViewingCert] = useState(null);
 
   useEffect(() => {
     api.get(`/public/passport/${username}`)
@@ -22,7 +24,7 @@ export default function PublicPassport() {
   if (loading) return <LoadingState />;
   if (error)   return <NotFound username={username} />;
 
-  const { user, passport, portfolio } = data;
+  const { user, passport, portfolio = [], activities = [] } = data;
   const score     = passport?.employability_score ?? 0;
   const breakdown = passport?.score_breakdown || {};
   const skills    = Array.isArray(passport?.skills) ? passport.skills : [];
@@ -30,7 +32,7 @@ export default function PublicPassport() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", padding: "24px 16px 48px" }}>
-      <div style={{ maxWidth: "720px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
+      <div style={{ maxWidth: "760px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
 
         {/* Platform top banner */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 4px" }}>
@@ -40,7 +42,7 @@ export default function PublicPassport() {
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />
             <span style={{ fontFamily: "var(--font)", fontSize: "11px", color: "var(--text-tertiary)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-              Verified Profile
+              Verified Candidate Passport
             </span>
           </div>
         </div>
@@ -98,7 +100,9 @@ export default function PublicPassport() {
         {/* Skills & Interests */}
         {(skills.length > 0 || interests.length > 0) && (
           <div className="card">
-            <span className="section-label" style={{ display: "block", marginBottom: "16px" }}>Skills & Interests</span>
+            <span className="section-label" style={{ display: "block", marginBottom: "16px" }}>
+              Verified Skills ({skills.length})
+            </span>
             <BadgeGrid skills={skills} interests={interests} />
           </div>
         )}
@@ -106,25 +110,31 @@ export default function PublicPassport() {
         {/* Score breakdown */}
         {Object.keys(breakdown).length > 0 && (
           <div className="card">
-            <span className="section-label" style={{ display: "block", marginBottom: "16px" }}>Score Breakdown</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <span className="section-label" style={{ display: "block", marginBottom: "16px" }}>
+              Employability Score Breakdown ({score} / 100 pts)
+            </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               {[
                 { key: "projects",   label: "Projects verified", max: 30 },
                 { key: "skills",     label: "Skills",            max: 20 },
                 { key: "hackathons", label: "Hackathons",        max: 20 },
                 { key: "openSource", label: "Open source PRs",   max: 15 },
-                { key: "mentoring",  label: "Mentoring",         max: 15 }
+                { key: "mentoring",  label: "Mentoring sessions", max: 15 }
               ].map(({ key, label, max }) => {
                 const item = breakdown[key] || {};
-                const pct  = toPercent(item.score ?? 0, max);
+                const count = item.count ?? (key === "projects" ? portfolio.length : key === "skills" ? skills.length : 0);
+                const itemScore = item.score ?? 0;
+                const pct  = toPercent(itemScore, max);
                 return (
                   <div key={key} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div style={{ width: "140px", fontSize: "12px", color: "var(--text-secondary)", flexShrink: 0 }}>{label}</div>
+                    <div style={{ width: "170px", fontSize: "12px", color: "var(--text-secondary)", flexShrink: 0 }}>
+                      {label} <span style={{ color: "var(--text-tertiary)", fontSize: "11px" }}>({count} verified)</span>
+                    </div>
                     <div style={{ flex: 1 }} className="progress-track">
                       <div className="progress-fill" style={{ width: `${pct}%` }} />
                     </div>
-                    <div style={{ width: "44px", textAlign: "right", fontFamily: "var(--font)", fontSize: "12px", flexShrink: 0 }}>
-                      {item.score ?? 0}/{max}
+                    <div style={{ width: "65px", textAlign: "right", fontFamily: "var(--font)", fontSize: "12px", flexShrink: 0 }}>
+                      {itemScore} / {max} pts
                     </div>
                   </div>
                 );
@@ -133,34 +143,184 @@ export default function PublicPassport() {
           </div>
         )}
 
-        {/* Verified projects */}
+        {/* Verified Activity Credentials */}
+        {activities.length > 0 && (
+          <div className="card">
+            <span className="section-label" style={{ display: "block", marginBottom: "16px" }}>
+              Verified Activity Credentials & Proof ({activities.length})
+            </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {activities.map((a) => {
+                const details = typeof a.details === "string" ? JSON.parse(a.details || "{}") : a.details || {};
+                const typeIcon = a.activity_type === "hackathon" ? <TrophyIcon size={18} color="var(--accent)" /> : a.activity_type === "open_source_pr" ? <GitPullRequestIcon size={18} color="var(--accent)" /> : <UsersIcon size={18} color="var(--accent)" />;
+                const typeLabel = a.activity_type === "hackathon" ? "Hackathon" : a.activity_type === "open_source_pr" ? "Open Source PR" : "Mentoring";
+                const hasImage = details.certificate_image || a.proof_url?.startsWith("data:image");
+
+                return (
+                  <div
+                    key={a.id}
+                    style={{
+                      padding: "12px 14px",
+                      background: "var(--bg-secondary)",
+                      borderRadius: "var(--radius)",
+                      border: "0.5px solid var(--border)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: "10px"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: "200px" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center" }}>{typeIcon}</span>
+                      <div>
+                        <div style={{ fontSize: "13px", fontWeight: "500" }}>{a.title}</div>
+                        <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "2px" }}>
+                          <span style={{ textTransform: "uppercase", fontFamily: "var(--font)", fontSize: "10px", color: "var(--text-tertiary)", marginRight: "6px" }}>
+                            {typeLabel}
+                          </span>
+                          {details.role_or_award && `· ${details.role_or_award}`}
+                          {details.year_or_date && ` · ${details.year_or_date}`}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {hasImage && (
+                        <button
+                          type="button"
+                          onClick={() => setViewingCert({ title: a.title, image: details.certificate_image || a.proof_url, details })}
+                          style={{
+                            fontSize: "11px",
+                            fontFamily: "var(--font)",
+                            color: "var(--accent)",
+                            background: "rgba(16, 185, 129, 0.12)",
+                            border: "0.5px solid var(--accent)",
+                            borderRadius: "var(--radius)",
+                            padding: "4px 10px",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px"
+                          }}
+                        >
+                          <CertificateIcon size={12} color="var(--accent)" />
+                          Certificate Photo
+                        </button>
+                      )}
+                      {a.proof_url && !a.proof_url.startsWith("data:") && (
+                        <a
+                          href={a.proof_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            fontSize: "11px",
+                            fontFamily: "var(--font)",
+                            color: "var(--text-primary)",
+                            background: "var(--surface)",
+                            border: "0.5px solid var(--border)",
+                            borderRadius: "var(--radius)",
+                            padding: "4px 10px",
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px"
+                          }}
+                        >
+                          View Proof
+                          <ExternalLinkIcon size={10} color="var(--text-secondary)" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* All Verified Projects */}
         {portfolio.length > 0 && (
           <div className="card">
-            <span className="section-label" style={{ display: "block", marginBottom: "16px" }}>Verified Projects</span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+              <span className="section-label">
+                All Verified Projects ({portfolio.length})
+              </span>
+              <span style={{ fontSize: "11px", color: "var(--green)", fontFamily: "var(--font)", fontWeight: "500" }}>
+                ✓ 100% AI Code Verified
+              </span>
+            </div>
+
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {portfolio.map((item, i) => (
-                <div key={i} style={{ padding: "12px", background: "var(--bg-secondary)", borderRadius: "var(--radius)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div
+                  key={i}
+                  style={{
+                    padding: "14px",
+                    background: "var(--bg-secondary)",
+                    borderRadius: "var(--radius)",
+                    border: "0.5px solid var(--border)"
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "8px" }}>
                     <div>
-                      <a href={item.repo_url} target="_blank" rel="noopener noreferrer"
-                        style={{ fontFamily: "var(--font)", fontSize: "13px", fontWeight: "500", textDecoration: "underline" }}>
-                        {item.title}
+                      <a
+                        href={item.repo_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          fontFamily: "var(--font)",
+                          fontSize: "14px",
+                          fontWeight: "600",
+                          color: "var(--text-primary)",
+                          textDecoration: "none"
+                        }}
+                      >
+                        {item.title} ↗
                       </a>
                       {item.description && (
-                        <p style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
+                        <p style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px", lineHeight: 1.4 }}>
                           {item.description}
                         </p>
                       )}
                     </div>
+                    {item.contribution_level && (
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          fontSize: "10px",
+                          fontFamily: "var(--font)",
+                          fontWeight: "600",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                          background: item.contribution_level === "high" ? "rgba(16, 185, 129, 0.12)" : "rgba(245, 158, 11, 0.12)",
+                          color: item.contribution_level === "high" ? "var(--green)" : "var(--amber)",
+                          border: `0.5px solid ${item.contribution_level === "high" ? "var(--green)" : "var(--amber)"}`
+                        }}
+                      >
+                        {item.contribution_level} complexity
+                      </span>
+                    )}
                   </div>
+
                   {Array.isArray(item.tech_stack) && item.tech_stack.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "8px" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
                       {item.tech_stack.map((t) => (
-                        <span key={t} style={{
-                          padding: "2px 7px", background: "var(--surface)",
-                          border: "0.5px solid var(--border)", borderRadius: "3px",
-                          fontSize: "11px", color: "var(--text-secondary)"
-                        }}>{t}</span>
+                        <span
+                          key={t}
+                          style={{
+                            padding: "2px 8px",
+                            background: "var(--surface)",
+                            border: "0.5px solid var(--border)",
+                            borderRadius: "3px",
+                            fontSize: "11px",
+                            color: "var(--text-secondary)",
+                            fontFamily: "var(--font-mono)"
+                          }}
+                        >
+                          {t}
+                        </span>
                       ))}
                     </div>
                   )}
@@ -172,9 +332,78 @@ export default function PublicPassport() {
 
         {/* Footer */}
         <div style={{ textAlign: "center", fontSize: "11px", color: "var(--text-tertiary)", fontFamily: "var(--font)" }}>
-          AI FUTURE PASSPORT · Last updated {formatDate(passport?.last_updated)}
+          AI FUTURE PASSPORT · Verified profile of @{user.github_username}
         </div>
       </div>
+
+      {/* Certificate Lightbox Modal */}
+      {viewingCert && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.85)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 200,
+            padding: "20px"
+          }}
+          onClick={() => setViewingCert(null)}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: "680px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              padding: "20px",
+              background: "var(--bg)",
+              borderRadius: "var(--radius)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "14px",
+              border: "0.5px solid var(--border)"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3 style={{ fontFamily: "var(--font)", fontSize: "16px", fontWeight: "600" }}>
+                  {viewingCert.title}
+                </h3>
+                <p style={{ fontSize: "12px", color: "var(--accent)", marginTop: "2px" }}>
+                  {viewingCert.details?.role_or_award} {viewingCert.details?.year_or_date && `· ${viewingCert.details.year_or_date}`}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingCert(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "18px", color: "var(--text-tertiary)", padding: "4px" }}
+              >
+                ✕
+              </button>
+            </div>
+            {viewingCert.image ? (
+              <img
+                src={viewingCert.image}
+                alt={viewingCert.title}
+                style={{ width: "100%", borderRadius: "var(--radius)", border: "0.5px solid var(--border)", objectFit: "contain", maxHeight: "65vh" }}
+              />
+            ) : (
+              <div style={{ padding: "30px", textAlign: "center", background: "var(--bg-secondary)", borderRadius: "var(--radius)" }}>
+                <p style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
+                  Certificate link: <a href={viewingCert.proof_url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", textDecoration: "underline" }}>{viewingCert.proof_url}</a>
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -182,7 +411,7 @@ export default function PublicPassport() {
 function LoadingState() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <span style={{ fontFamily: "var(--font)", fontSize: "13px", color: "var(--text-tertiary)" }}>Loading passport...</span>
+      <span style={{ fontFamily: "var(--font)", fontSize: "13px", color: "var(--text-tertiary)" }}>Loading verified passport...</span>
     </div>
   );
 }

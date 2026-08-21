@@ -193,7 +193,9 @@ export default function Dashboard() {
       {/* Score breakdown */}
       {Object.keys(breakdown).length > 0 && (
         <div className="card">
-          <span className="section-label" style={{ display: "block", marginBottom: "20px" }}>Score Breakdown</span>
+          <span className="section-label" style={{ display: "block", marginBottom: "20px" }}>
+            Score Breakdown ({passport?.employability_score ?? 0} / 100 pts)
+          </span>
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             {[
               { key: "projects",   label: "Projects verified", max: 30 },
@@ -203,17 +205,18 @@ export default function Dashboard() {
               { key: "mentoring",  label: "Mentoring sessions", max: 15 }
             ].map(({ key, label, max }) => {
               const item      = breakdown[key] || {};
+              const count     = item.count ?? (key === "projects" ? portfolio.length : key === "skills" ? (passport?.skills || []).length : 0);
               const itemScore = item.score ?? 0;
               return (
                 <div key={key} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{ width: "130px", fontSize: "12px", color: "var(--text-secondary)", flexShrink: 0 }}>
-                    {label}
+                  <div style={{ width: "170px", fontSize: "12px", color: "var(--text-secondary)", flexShrink: 0 }}>
+                    {label} <span style={{ color: "var(--text-tertiary)", fontSize: "11px" }}>({count} verified)</span>
                   </div>
                   <div style={{ flex: 1 }} className="progress-track">
                     <div className="progress-fill" style={{ width: `${toPercent(itemScore, max)}%` }} />
                   </div>
-                  <div style={{ width: "48px", textAlign: "right", fontFamily: "var(--font)", fontSize: "12px", flexShrink: 0 }}>
-                    {itemScore}/{max}
+                  <div style={{ width: "65px", textAlign: "right", fontFamily: "var(--font)", fontSize: "12px", flexShrink: 0 }}>
+                    {itemScore} / {max} pts
                   </div>
                 </div>
               );
