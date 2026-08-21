@@ -215,7 +215,7 @@ export default function Dashboard() {
                   <div style={{ flex: 1 }} className="progress-track">
                     <div className="progress-fill" style={{ width: `${toPercent(itemScore, max)}%` }} />
                   </div>
-                  <div style={{ width: "65px", textAlign: "right", fontFamily: "var(--font)", fontSize: "12px", flexShrink: 0 }}>
+                  <div style={{ minWidth: "90px", textAlign: "right", fontFamily: "var(--font)", fontSize: "12px", flexShrink: 0, whiteSpace: "nowrap" }}>
                     {itemScore} / {max} pts
                   </div>
                 </div>
